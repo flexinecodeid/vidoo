@@ -1,12 +1,17 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="id">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Vidoo - Simple Video Hosting</title>
+    
+    <!-- Meta Tags for SEO & Sharing -->
+    <meta name="description" content="Fast, free, and minimal video hosting. Share your moments instantly.">
+    
+    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Firebase SDK Compat (Sangat mudah digunakan langsung di HTML tunggal) -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
@@ -41,12 +46,11 @@
 
     <!-- Header -->
     <header class="w-full bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-0 z-40 shadow-sm">
-        <div class="text-2xl font-black tracking-tighter cursor-pointer flex items-center gap-2" onclick="navigate('upload')">
+        <div class="text-2xl font-black tracking-tighter cursor-pointer flex items-center gap-2" onclick="goHome()">
             <svg class="w-8 h-8 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM15 16H5V8h10v8z"/></svg>
             Vidoo<span class="text-indigo-600">.</span>
         </div>
         <nav class="flex items-center gap-6 text-sm font-medium text-gray-600">
-            <!-- Auth State UI -->
             <div id="nav-logged-out" class="flex">
                 <button onclick="loginWithGoogle()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm">
                     Sign In
@@ -93,7 +97,7 @@
                 class="w-full max-w-2xl h-72 border-2 border-dashed border-gray-300 rounded-3xl flex flex-col items-center justify-center bg-white hover:bg-indigo-50 hover:border-indigo-400 transition-all cursor-pointer relative shadow-sm group"
             >
                 <input type="file" id="file-input" accept="video/mp4,video/webm,video/ogg" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
-                <svg class="w-14 h-14 text-gray-400 group-hover:text-indigo-500 transition-colors mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                <svg class="w-14 h-14 text-gray-400 group-hover:text-indigo-500 transition-colors mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
                 <p class="text-xl font-semibold text-gray-700">Click to browse</p>
                 <p class="text-gray-400 mt-2">or drag and drop a video file here</p>
             </div>
@@ -102,7 +106,7 @@
         <!-- VIEW: LOADING -->
         <div id="view-loading" class="view fade-in w-full my-auto">
             <div class="w-14 h-14 border-4 border-gray-100 border-t-indigo-600 rounded-full loader mb-6"></div>
-            <h2 class="text-2xl font-bold text-gray-800">Uploading to Cloudflare R2...</h2>
+            <h2 class="text-2xl font-bold text-gray-800">Uploading Video, Please Wait...</h2>
             <p class="text-gray-500 mt-2 font-medium" id="upload-progress">0%</p>
             <div class="w-full max-w-md bg-gray-200 rounded-full h-3 mt-6 overflow-hidden">
                 <div id="progress-bar" class="bg-indigo-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
@@ -113,8 +117,14 @@
         <!-- VIEW: PLAYER -->
         <div id="view-player" class="view fade-in w-full my-auto">
             <!-- Video Player -->
-            <div class="w-full bg-black rounded-2xl overflow-hidden shadow-xl mb-6 border border-gray-800">
-                <video id="video-player" class="w-full max-h-[65vh] object-contain" controls>
+            <div class="w-full bg-black rounded-2xl overflow-hidden shadow-xl mb-6 border border-gray-800 relative">
+                <!-- Fallback jika video gagal dimuat -->
+                <div id="video-error-msg" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 text-white z-0 hidden">
+                    <svg class="w-12 h-12 text-red-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                    <p class="font-medium text-lg">Video could not be loaded</p>
+                    <p class="text-sm text-gray-400">It may have been deleted or the link is invalid.</p>
+                </div>
+                <video id="video-player" class="w-full max-h-[65vh] object-contain relative z-10" controls>
                     Your browser does not support the video tag.
                 </video>
             </div>
@@ -133,7 +143,7 @@
                     </button>
                 </div>
 
-                <!-- Action Buttons (Delete & Report) -->
+                <!-- Action Buttons -->
                 <div class="flex gap-3 w-full md:w-auto">
                     <button onclick="showModal('report-modal')" class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 text-gray-600 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors">
                         <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
@@ -147,8 +157,22 @@
                 </div>
             </div>
 
-            <button onclick="navigate('upload')" class="text-indigo-600 font-semibold hover:underline flex items-center gap-2 mb-8">
+            <!-- Tombol kembali yang dinamis -->
+            <button id="btn-back-upload" onclick="goHome()" class="text-indigo-600 font-semibold hover:underline flex items-center gap-2 mb-8 hidden">
                 &larr; Upload another video
+            </button>
+            <button id="btn-back-home" onclick="goHome()" class="text-indigo-600 font-semibold hover:underline flex items-center gap-2 mb-8 hidden">
+                &larr; Back to Home
+            </button>
+        </div>
+
+        <!-- VIEW: 404 NOT FOUND -->
+        <div id="view-404" class="view fade-in w-full my-auto text-center">
+            <h1 class="text-9xl font-black text-gray-200 mb-4">404</h1>
+            <h2 class="text-3xl font-bold text-gray-900 mb-2">Page Not Found</h2>
+            <p class="text-gray-500 mb-8 max-w-md mx-auto">The link you followed is invalid, or the video has been removed.</p>
+            <button onclick="goHome()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-3 rounded-xl font-medium transition-colors shadow-sm inline-flex items-center gap-2">
+                &larr; Go to Homepage
             </button>
         </div>
 
@@ -169,7 +193,7 @@
                 </p>
                 <p><strong>4. Moderation & Reporting</strong><br>Users can report content violating our policies. We reserve the right to remove any video at any time without prior notice if it violates our Terms of Service.</p>
             </div>
-            <button onclick="navigate(currentUser ? 'upload' : 'login')" class="mt-8 bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-medium transition-colors w-fit">
+            <button onclick="goHome()" class="mt-8 bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-medium transition-colors w-fit">
                 Back
             </button>
         </div>
@@ -182,8 +206,6 @@
             <p class="text-gray-500 text-sm">© 2026 Vidoo. All rights reserved.</p>
             <div class="flex gap-6">
                 <button onclick="navigate('tos')" class="text-sm text-gray-500 hover:text-indigo-600 transition font-medium">Terms of Service</button>
-                <a href="#" class="text-sm text-gray-500 hover:text-indigo-600 transition font-medium">Privacy</a>
-                <a href="#" class="text-sm text-gray-500 hover:text-indigo-600 transition font-medium">Contact</a>
             </div>
         </div>
     </footer>
@@ -241,19 +263,16 @@
 
     <script>
         // --- KONFIGURASI UTAMA ---
-        // 1. GANTI DENGAN KODE FIREBASE CONFIG MILIKMU!
-        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
-  const firebaseConfig = {
-  apiKey: "AIzaSyD0b0V0KbUahasbtcJF_F0hTIR6yeti54g",
-  authDomain: "adexsoft-web.firebaseapp.com",
-  projectId: "adexsoft-web",
-  storageBucket: "adexsoft-web.firebasestorage.app",
-  messagingSenderId: "479632502802",
-  appId: "1:479632502802:web:c5f1d7322529fb303d28cb",
-  measurementId: "G-MG04K5HW5X"
-};
+        const firebaseConfig = {
+            apiKey: "AIzaSyD0b0V0KbUahasbtcJF_F0hTIR6yeti54g",
+            authDomain: "adexsoft-web.firebaseapp.com",
+            projectId: "adexsoft-web",
+            storageBucket: "adexsoft-web.firebasestorage.app",
+            messagingSenderId: "479632502802",
+            appId: "1:479632502802:web:c5f1d7322529fb303d28cb",
+            measurementId: "G-MG04K5HW5X"
+        };
 
-        // 2. GANTI DENGAN URL WORKER CLOUDFLARE MU!
         const API_BASE_URL = 'https://vidoo.pputu1972.workers.dev'; 
 
         // Inisialisasi Firebase
@@ -263,7 +282,7 @@
 
         let currentUser = null; 
         let idToken = null;
-        let uploaderUidOfCurrentVideo = null;
+        let isViewingSharedVideo = false;
 
         const views = document.querySelectorAll('.view');
         const fileInput = document.getElementById('file-input');
@@ -271,44 +290,118 @@
         const progressBar = document.getElementById('progress-bar');
         const progressText = document.getElementById('upload-progress');
         const videoPlayer = document.getElementById('video-player');
+        const videoErrorMsg = document.getElementById('video-error-msg');
         const shareUrl = document.getElementById('share-url');
         const copyBtn = document.getElementById('copy-btn');
         const toast = document.getElementById('toast');
         const toastMessage = document.getElementById('toast-message');
         const btnDelete = document.getElementById('btn-delete');
         
-        // Navbar elements
         const navLoggedOut = document.getElementById('nav-logged-out');
         const navLoggedIn = document.getElementById('nav-logged-in');
         const userAvatarImg = document.getElementById('user-avatar-img');
         const userAvatarInitial = document.getElementById('user-avatar-initial');
 
-        // Pantau Status Login Firebase secara Realtime
+        // --- MENGATASI VIDEO ERROR 404 SAAT DIPUTAR ---
+        videoPlayer.addEventListener('error', function(e) {
+            // Jika video gagal dimuat, tampilkan pesan error overlay di video player
+            videoPlayer.classList.add('hidden');
+            videoErrorMsg.classList.remove('hidden');
+        });
+
+        // --- SISTEM ROUTING (Cek URL saat pertama buka) ---
+        window.addEventListener('DOMContentLoaded', () => {
+            const urlParams = new URLSearchParams(window.location.search);
+            
+            // 1. Cek parameter acak (Bukan 'v')
+            if (window.location.search && !urlParams.has('v')) {
+                navigate('404');
+                return;
+            }
+
+            // 2. Cek parameter video ('v')
+            const videoParam = urlParams.get('v');
+            if (videoParam) {
+                // Validasi sederhana: Path video minimal harus ada garis miringnya (USER_ID/FILE_ID)
+                if (!videoParam.includes('/') || !videoParam.endsWith('.mp4')) {
+                    navigate('404');
+                    return;
+                }
+
+                isViewingSharedVideo = true;
+                const finalVideoUrl = `${API_BASE_URL}/v/${videoParam}`;
+                
+                // Reset error state
+                videoPlayer.classList.remove('hidden');
+                videoErrorMsg.classList.add('hidden');
+                videoPlayer.src = finalVideoUrl;
+                
+                shareUrl.value = window.location.href;
+                
+                document.getElementById('btn-back-upload').classList.add('hidden');
+                document.getElementById('btn-back-home').classList.remove('hidden');
+                
+                btnDelete.classList.add('hidden');
+                btnDelete.classList.remove('flex');
+                
+                navigate('player');
+            }
+        });
+
+        // Pantau Status Login Firebase
         auth.onAuthStateChanged(async (user) => {
             if (user) {
                 currentUser = user;
-                // Ambil ID Token Firebase untuk dikirimkan ke Cloudflare Worker sebagai bukti valid login
                 idToken = await user.getIdToken();
                 updateUIForUser(user);
-                navigate('upload');
+                
+                // Jika URL ada embel-embel aneh (sudah masuk 404), biarkan di 404
+                if (document.getElementById('view-404').classList.contains('active')) return;
+
+                if (!isViewingSharedVideo) {
+                    navigate('upload');
+                } else {
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const videoParam = urlParams.get('v');
+                    if (videoParam && videoParam.startsWith(user.uid)) {
+                        btnDelete.classList.remove('hidden');
+                        btnDelete.classList.add('flex');
+                    }
+                }
             } else {
                 currentUser = null;
                 idToken = null;
                 updateUIForLoggedOut();
-                navigate('login');
+                
+                if (document.getElementById('view-404').classList.contains('active')) return;
+                
+                if (!isViewingSharedVideo) {
+                    navigate('login');
+                }
             }
         });
 
         // --- Navigation ---
         function navigate(viewId) {
-            if (viewId === 'upload' && !currentUser) {
-                viewId = 'login';
+            views.forEach(view => view.classList.remove('active'));
+            const targetView = document.getElementById(`view-${viewId}`);
+            if(targetView) {
+                targetView.classList.add('active');
+            } else {
+                document.getElementById('view-404').classList.add('active');
             }
-            views.forEach(view => {
-                view.classList.remove('active');
-            });
-            document.getElementById(`view-${viewId}`).classList.add('active');
             window.scrollTo(0, 0);
+        }
+
+        function goHome() {
+            window.history.replaceState({}, document.title, window.location.pathname);
+            isViewingSharedVideo = false;
+            
+            videoPlayer.pause();
+            videoPlayer.removeAttribute('src');
+            videoPlayer.load();
+
+            navigate(currentUser ? 'upload' : 'login');
         }
 
         // --- Firebase Google Login / Logout ---
@@ -325,12 +418,12 @@
             try {
                 await auth.signOut();
                 showToast("Logged out successfully", false);
+                goHome();
             } catch (error) {
                 console.error(error);
             }
         }
 
-        // Update UI berdasarkan status Auth
         function updateUIForUser(user) {
             navLoggedOut.classList.add('hidden');
             navLoggedIn.classList.remove('hidden');
@@ -394,72 +487,76 @@
             uploadToR2(file);
         }
 
-        // --- UPLOAD FISIK SEBENARNYA KE CLOUDFLARE R2 ---
+        // --- UPLOAD MENGGUNAKAN JALUR DIRECT PROXY WORKER ---
         async function uploadToR2(file) {
-    navigate('loading');
-    progressBar.style.width = `0%`;
-    progressText.innerText = `0%`;
+            navigate('loading');
+            progressBar.style.width = `0%`;
+            progressText.innerText = `0%`;
 
-    try {
-        // Ambil token Firebase terbaru
-        idToken = await currentUser.getIdToken(true);
+            try {
+                idToken = await currentUser.getIdToken(true);
+                const xhr = new XMLHttpRequest();
+                
+                xhr.upload.addEventListener('progress', (event) => {
+                    if (event.lengthComputable) {
+                        const percentComplete = Math.round((event.loaded / event.total) * 100);
+                        progressBar.style.width = `${percentComplete}%`;
+                        progressText.innerText = `${percentComplete}%`;
+                    }
+                });
 
-        const xhr = new XMLHttpRequest();
-        
-        // Pantau progres upload secara real-time
-        xhr.upload.addEventListener('progress', (event) => {
-            if (event.lengthComputable) {
-                const percentComplete = Math.round((event.loaded / event.total) * 100);
-                progressBar.style.width = `${percentComplete}%`;
-                progressText.innerText = `${percentComplete}%`;
-            }
-        });
+                xhr.addEventListener('load', () => {
+                    if (xhr.status === 200 || xhr.status === 201) {
+                        try {
+                            const data = JSON.parse(xhr.responseText);
+                            const finalId = data.fileKey.replace('videos/', ''); 
+                            showVideoPlayer(finalId, currentUser.uid);
+                        } catch (e) {
+                            alert("Format respons server tidak dikenali.");
+                            navigate('upload');
+                        }
+                    } else {
+                        alert("Upload failed di server backend. Status: " + xhr.status);
+                        navigate('upload');
+                    }
+                    fileInput.value = ''; 
+                });
 
-        // Ketika upload selesai
-        xhr.addEventListener('load', () => {
-            if (xhr.status === 200 || xhr.status === 201) {
-                const data = JSON.parse(xhr.responseText);
-                const finalId = data.fileKey.replace('videos/', '');
-                showVideoPlayer(finalId, currentUser.uid);
-            } else {
-                alert("Upload gagal di server backend. Status: " + xhr.status);
+                xhr.addEventListener('error', () => {
+                    alert("Network error occurred during upload.");
+                    navigate('upload');
+                    fileInput.value = '';
+                });
+
+                xhr.open('POST', `${API_BASE_URL}/upload`, true);
+                xhr.setRequestHeader('Authorization', `Bearer ${idToken}`);
+                xhr.setRequestHeader('Content-Type', file.type); 
+                xhr.send(file);
+
+            } catch (error) {
+                console.error(error);
+                alert("Upload Gagal: " + error.message);
                 navigate('upload');
+                fileInput.value = '';
             }
-        });
-
-        xhr.addEventListener('error', () => {
-            alert("Network error occurred during upload.");
-            navigate('upload');
-        });
-
-        // Langsung arahkan ke endpoint /upload milik Worker kamu
-        xhr.open('POST', `${API_BASE_URL}/upload`, true);
-        
-        // Kirimkan token otentikasi
-        xhr.setRequestHeader('Authorization', `Bearer ${idToken}`);
-        xhr.setRequestHeader('Content-Type', file.type);
-
-        // Kirim file mentah secara direct proxy
-        xhr.send(file);
-
-    } catch (error) {
-        console.error(error);
-        alert("Upload Gagal: " + error.message);
-        navigate('upload');
-    }
         }
 
         function showVideoPlayer(videoPath, uploaderUid) {
-            // Path video dinamis: USER_ID/UUID.mp4
             const finalVideoUrl = `${API_BASE_URL}/v/${videoPath}`;
+            
+            videoPlayer.classList.remove('hidden');
+            videoErrorMsg.classList.add('hidden');
             videoPlayer.src = finalVideoUrl;
             
-            // Link Share URL
-            shareUrl.value = `${window.location.origin}/v/${videoPath}`; 
+            const newUrl = `${window.location.origin}/?v=${videoPath}`;
+            shareUrl.value = newUrl; 
             
-            uploaderUidOfCurrentVideo = uploaderUid;
+            window.history.replaceState({}, document.title, `/?v=${videoPath}`);
+            isViewingSharedVideo = true;
 
-            // Tombol hapus hanya muncul jika pemilik video adalah user yang login
+            document.getElementById('btn-back-upload').classList.remove('hidden');
+            document.getElementById('btn-back-home').classList.add('hidden');
+
             if (currentUser && currentUser.uid === uploaderUid) {
                 btnDelete.classList.remove('hidden');
                 btnDelete.classList.add('flex');
@@ -494,16 +591,10 @@
         }
 
         function deleteVideo() {
-            // Di sini kamu bisa menambahkan fetch request DELETE ke Cloudflare Worker
+            // (Opsional) Tambahkan fetch request DELETE ke Cloudflare Worker di masa depan
             hideModal('delete-modal');
-            videoPlayer.pause();
-            videoPlayer.removeAttribute('src');
-            fileInput.value = '';
-            progressBar.style.width = '0%';
-            progressText.innerText = '0%';
-            
-            showToast("Video permanently deleted.", true);
-            navigate('upload');
+            showToast("Video deleted.", false);
+            goHome(); 
         }
 
         function submitReport() {
@@ -526,7 +617,6 @@
             showToast("Report submitted successfully. We will review it shortly.", false);
         }
 
-        // --- Modals & Toasts ---
         function showModal(id) {
             const modal = document.getElementById(id);
             const box = document.getElementById(`${id}-box`);
