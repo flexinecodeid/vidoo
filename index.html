@@ -4,25 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     
-    <!-- Meta Tags SEO & Description -->
-    <title>Vidoo - Fast & Simple Video Hosting</title>
-    <meta name="description" content="Upload, share, and enjoy your videos instantly. A blazing fast, free, and minimal video hosting platform.">
-    <meta name="keywords" content="video hosting, share video, vidoo, cloud storage, mp4 upload">
-    <meta name="author" content="Arruta">
+    <title>Vidoo - Free and simple video hosting</title>
+    <meta name="description" content="Free and simple video hosting. Upload and share your videos quickly.">
     
-    <!-- Open Graph for Link Previews -->
-    <meta property="og:title" content="Vidoo - Simple Video Hosting">
+    <!-- Open Graph -->
+    <meta property="og:title" content="Vidoo - Free Video Hosting">
     <meta property="og:description" content="Upload and share your videos quickly and easily with Vidoo.">
     <meta property="og:image" content="https://cdn.discordapp.com/attachments/1403935227344322633/1507655668344164472/file_0000000083a472088c9e70d448ec9a7d.png?ex=6a12b142&is=6a115fc2&hm=dd9424cf1887b3baa8aeccb024f2178c20d28cac31e39bf74f982d7ea7a0168b&">
-    <meta property="og:type" content="website">
-
+    
     <!-- Favicon -->
     <link rel="icon" href="https://cdn.discordapp.com/attachments/1403935227344322633/1507655668344164472/file_0000000083a472088c9e70d448ec9a7d.png?ex=6a12b142&is=6a115fc2&hm=dd9424cf1887b3baa8aeccb024f2178c20d28cac31e39bf74f982d7ea7a0168b&" type="image/png">
 
-    <!-- Fonts: Manrope (Body) & Poppins (Headings) -->
+    <!-- Fonts: Manrope -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700&family=Poppins:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 
     <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -30,295 +26,175 @@
         tailwind.config = {
             theme: {
                 extend: {
-                    colors: {
-                        brand: { 50: '#fff7ed', 100: '#ffedd5', 500: '#f97316', 600: '#ea580c', 700: '#c2410c' }
-                    },
-                    fontFamily: {
-                        sans: ['Manrope', 'sans-serif'],
-                        heading: ['Poppins', 'sans-serif']
-                    }
+                    fontFamily: { sans: ['Manrope', 'sans-serif'] }
                 }
             }
         }
     </script>
 
-    <!-- Firebase SDK Compat -->
+    <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
 
     <style>
-        /* Modern App-like Resets */
-        body { 
-            -webkit-font-smoothing: antialiased; 
-            -moz-osx-font-smoothing: grayscale; 
-            background-color: #F8F9FA; 
-            color: #1A1D20;
+        /* Super Minimalist & Flat Style */
+        body { background-color: #ffffff; color: #111; -webkit-font-smoothing: antialiased; }
+        .view { display: none; }
+        .view.active { display: flex; flex-direction: column; width: 100%; min-height: 80vh; }
+        
+        /* Modal Overlay */
+        .modal-overlay { background-color: rgba(0, 0, 0, 0.7); }
+        
+        /* Spinning Ring for Processing */
+        .spinner-ring {
+            width: 48px; height: 48px;
+            border: 4px solid #f3f4f6;
+            border-top-color: #111;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
         }
-        
-        .view { display: none; opacity: 0; transition: opacity 0.15s ease-out; }
-        .view.active { display: block; opacity: 1; animation: slideUp 0.3s ease-out forwards; }
-        
-        @keyframes slideUp {
-            from { transform: translateY(8px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-        
-        /* Minimalist Spinner */
-        .spinner { width: 32px; height: 32px; border: 3px solid #ffedd5; border-top-color: #f97316; border-radius: 50%; animation: spin 0.8s linear infinite; }
-        .spinner-sm { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,0.3); border-top-color: #fff; border-radius: 50%; animation: spin 0.8s linear infinite; }
         @keyframes spin { to { transform: rotate(360deg); } }
 
-        /* Video optimization: Hardware acceleration, removes outline */
-        video { 
-            transform: translateZ(0); 
-            -webkit-transform: translateZ(0);
-            outline: none;
-            background-color: #000;
-        }
-        
-        /* Custom subtle shadow for a human-crafted feel */
-        .shadow-human {
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.04), 0 0 3px rgba(0,0,0,0.02);
-        }
+        video { background-color: #000; border-radius: 12px; outline: none; }
+        input[type="text"] { outline: none; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
 
-    <!-- HEADER -->
-    <header class="w-full bg-white/80 backdrop-blur-md border-b border-gray-200/60 sticky top-0 z-40">
-        <div class="max-w-4xl mx-auto px-6 py-3.5 flex justify-between items-center">
-            <!-- Brand -->
-            <div class="flex items-center gap-3 cursor-pointer hover:opacity-80 transition-opacity" onclick="goHome()">
-                <!-- Logo dibulatkan setengah (rounded-2xl) sesuai permintaan -->
-                <img src="https://cdn.discordapp.com/attachments/1403935227344322633/1507655668344164472/file_0000000083a472088c9e70d448ec9a7d.png?ex=6a12b142&is=6a115fc2&hm=dd9424cf1887b3baa8aeccb024f2178c20d28cac31e39bf74f982d7ea7a0168b&" 
-                     alt="Vidoo Logo" 
-                     class="w-9 h-9 object-cover rounded-2xl shadow-sm border border-gray-100">
-                <span class="font-heading font-bold text-xl text-gray-900 tracking-tight">Vidoo</span>
-            </div>
-
-            <!-- Navigation -->
-            <nav class="text-sm font-semibold">
-                <div id="nav-logged-out" class="flex">
-                    <button onclick="loginWithGoogle()" class="bg-gray-900 hover:bg-black text-white px-5 py-2 rounded-lg transition-colors">Sign In</button>
-                </div>
-                <div id="nav-logged-in" class="hidden items-center gap-4">
-                    <div class="flex items-center gap-2">
-                        <div class="w-8 h-8 rounded-full bg-brand-50 border border-brand-100 flex items-center justify-center overflow-hidden">
-                            <img id="user-avatar-img" src="" alt="Avatar" class="w-full h-full object-cover hidden">
-                            <span id="user-avatar-initial" class="text-brand-600 font-bold">U</span>
-                        </div>
-                    </div>
-                    <button onclick="handleLogout()" class="text-gray-500 hover:text-gray-800 transition-colors">Log out</button>
-                </div>
-            </nav>
+    <!-- MINIMALIST NAVBAR -->
+    <header class="w-full px-6 py-5 flex justify-between items-center max-w-5xl mx-auto">
+        <div class="flex items-center gap-2 cursor-pointer" onclick="goHome()">
+            <img src="https://cdn.discordapp.com/attachments/1403935227344322633/1507655668344164472/file_0000000083a472088c9e70d448ec9a7d.png?ex=6a12b142&is=6a115fc2&hm=dd9424cf1887b3baa8aeccb024f2178c20d28cac31e39bf74f982d7ea7a0168b&" 
+                 class="w-8 h-8 rounded-xl object-cover">
+            <span class="font-extrabold text-2xl tracking-tight">vidoo</span>
         </div>
+
+        <nav class="flex items-center gap-4 text-sm font-semibold text-gray-600">
+            <div id="nav-logged-out" class="flex gap-4 items-center">
+                <button onclick="loginWithGoogle()" class="hover:text-black">Sign In</button>
+                <button onclick="triggerUpload()" class="bg-black text-white px-5 py-2.5 rounded-full hover:bg-gray-800 transition">Upload</button>
+            </div>
+            <div id="nav-logged-in" class="hidden items-center gap-4">
+                <button onclick="handleLogout()" class="hover:text-black">Log Out</button>
+                <button onclick="triggerUpload()" class="bg-black text-white px-5 py-2.5 rounded-full hover:bg-gray-800 transition">Upload</button>
+            </div>
+        </nav>
     </header>
 
-    <!-- MAIN CONTENT -->
-    <main class="flex-1 w-full max-w-4xl mx-auto px-6 py-10 md:py-16 flex flex-col relative">
+    <!-- MAIN APP AREA -->
+    <main class="flex-1 w-full max-w-3xl mx-auto px-6 flex flex-col justify-center">
         
-        <!-- 1. VIEW: LOGIN -->
-        <div id="view-login" class="view max-w-md mx-auto w-full mt-8 md:mt-12">
-            <div class="bg-white p-8 md:p-10 rounded-3xl shadow-human border border-gray-100">
-                <div class="w-14 h-14 bg-brand-50 rounded-2xl flex items-center justify-center mb-6 border border-brand-100">
-                    <svg class="w-7 h-7 text-brand-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                </div>
-                <h1 class="font-heading text-2xl font-bold text-gray-900 mb-2">Welcome back</h1>
-                <p class="text-gray-500 text-sm mb-8 leading-relaxed">Sign in to your account to upload and manage your video content.</p>
-                <button onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-white border border-gray-200 text-gray-700 hover:bg-gray-50 hover:border-gray-300 px-5 py-3 rounded-xl font-semibold transition-all">
-                    <svg class="w-5 h-5" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
-                    Continue with Google
-                </button>
-            </div>
-        </div>
-
-        <!-- 2. VIEW: UPLOAD (App-like Dashboard Style) -->
-        <div id="view-upload" class="view w-full max-w-3xl mx-auto">
-            <div class="mb-6 md:mb-8">
-                <h1 class="font-heading text-2xl md:text-3xl font-bold text-gray-900 tracking-tight">Upload Video</h1>
-                <p class="text-gray-500 text-sm mt-1">Select an MP4 file from your device. Maximum file size is 100MB.</p>
-            </div>
-
-            <div id="drop-zone" class="w-full h-72 border-2 border-dashed border-gray-200 bg-white hover:bg-brand-50/50 hover:border-brand-300 rounded-3xl flex flex-col items-center justify-center transition-all cursor-pointer group">
-                <input type="file" id="file-input" accept="video/mp4,video/webm" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10 hidden">
-                <div class="w-16 h-16 bg-gray-50 border border-gray-100 group-hover:bg-white group-hover:border-brand-100 group-hover:shadow-sm rounded-2xl flex items-center justify-center mb-5 transition-all">
-                    <svg class="w-7 h-7 text-gray-400 group-hover:text-brand-500 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
-                </div>
-                <p class="font-heading text-base font-semibold text-gray-800">Click or drag file to this area</p>
-                <p class="text-gray-400 text-sm mt-2">MP4, WebM up to 100MB</p>
-            </div>
-        </div>
-
-        <!-- 3. VIEW: LOADING -->
-        <div id="view-loading" class="view w-full max-w-md mx-auto mt-12 text-center">
-            <div class="bg-white p-10 rounded-3xl shadow-human border border-gray-100 flex flex-col items-center">
-                <div class="spinner mb-5"></div>
-                <h2 class="font-heading text-lg font-bold text-gray-900">Uploading...</h2>
-                <p class="text-brand-500 font-bold text-2xl mt-1 font-heading tracking-tight" id="upload-progress">0%</p>
-                
-                <div class="w-full bg-gray-100 rounded-full h-2 mt-5 overflow-hidden">
-                    <div id="progress-bar" class="bg-brand-500 h-full rounded-full transition-all duration-200 ease-out" style="width: 0%"></div>
-                </div>
-                <p class="text-xs text-gray-400 mt-4 font-medium">Please leave this page open.</p>
-            </div>
-        </div>
-
-        <!-- 4. VIEW: PLAYER (Optimized Anti-Lag) -->
-        <div id="view-player" class="view w-full max-w-3xl mx-auto">
+        <!-- 1. VIEW: HOME / UPLOAD -->
+        <div id="view-home" class="view justify-center items-center text-center">
+            <h1 class="text-xl md:text-2xl font-bold text-gray-800 mb-8 mt-12">Free and simple video hosting.</h1>
             
-            <!-- Video Container -->
-            <div class="w-full rounded-2xl overflow-hidden shadow-human mb-5 relative bg-black border border-gray-200/50">
-                <div id="video-error-msg" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-900 text-white z-0 hidden">
-                    <svg class="w-10 h-10 text-gray-500 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    <p class="font-heading font-medium text-base text-gray-300">Video unavailable</p>
-                </div>
-                
-                <!-- Anti-lag tag: playsinline, no shadow on video itself -->
-                <video id="video-player" class="w-full max-h-[65vh] object-contain relative z-10" controls playsinline preload="metadata"></video>
+            <input type="file" id="file-input" accept="video/mp4,video/webm" class="hidden">
+            <button onclick="triggerUpload()" class="bg-black text-white px-10 py-4 rounded-full font-bold text-lg hover:bg-gray-800 transition transform hover:scale-[1.02]">
+                Upload Video
+            </button>
+            <p class="text-gray-400 text-sm mt-4">MP4, WebM up to 100MB</p>
+        </div>
+
+        <!-- 2. VIEW: PLAYER -->
+        <div id="view-player" class="view w-full pt-8">
+            <div class="w-full relative mb-6">
+                <!-- Video Player -->
+                <video id="video-player" class="w-full max-h-[70vh] object-contain shadow-md" controls playsinline preload="metadata"></video>
             </div>
             
-            <!-- Details & Actions -->
-            <div class="w-full flex flex-col sm:flex-row gap-4 justify-between items-start sm:items-center">
-                <!-- Share Link -->
-                <div class="w-full sm:flex-1 bg-white p-1.5 rounded-xl border border-gray-200 flex items-center shadow-sm">
-                    <input type="text" id="share-url" readonly class="flex-1 bg-transparent border-none text-gray-600 font-medium px-3 outline-none w-full text-sm">
-                    <button onclick="copyLink()" id="copy-btn" class="bg-gray-900 hover:bg-black text-white px-5 py-2 rounded-lg text-sm font-semibold transition-colors">Copy Link</button>
+            <!-- Share Box -->
+            <div class="w-full flex flex-col md:flex-row gap-4 mb-8">
+                <div class="flex-1 border-2 border-gray-200 rounded-2xl flex items-center p-1.5 bg-gray-50 focus-within:border-gray-400 transition">
+                    <div class="pl-4 text-gray-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                    </div>
+                    <input type="text" id="share-url" readonly class="flex-1 bg-transparent text-gray-800 font-semibold px-3 py-2 w-full text-sm">
+                    <button onclick="copyLink()" id="copy-btn" class="bg-black hover:bg-gray-800 text-white px-6 py-2.5 rounded-xl text-sm font-bold transition">Copy Link</button>
                 </div>
 
-                <!-- Action Buttons -->
-                <div class="flex gap-2 w-full sm:w-auto">
-                    <button onclick="showModal('report-modal')" class="flex-1 sm:flex-none flex items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-gray-50 text-gray-600 px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm">
-                        Report
-                    </button>
-                    <!-- Delete button (uploader only) -->
-                    <button id="btn-delete" onclick="showModal('delete-modal')" class="hidden flex-1 sm:flex-none items-center justify-center gap-2 bg-white border border-gray-200 hover:bg-red-50 hover:border-red-200 hover:text-red-600 text-gray-600 px-4 py-2 rounded-xl text-sm font-semibold transition-colors shadow-sm">
-                        Delete
-                    </button>
+                <div class="flex gap-2">
+                    <button onclick="showReportModal()" class="flex-1 md:flex-none border-2 border-gray-200 text-gray-700 hover:bg-gray-100 px-6 py-2.5 rounded-2xl text-sm font-bold transition">Report</button>
+                    <button id="btn-delete" onclick="showDeleteModal()" class="hidden flex-1 md:flex-none border-2 border-red-100 text-red-600 hover:bg-red-50 px-6 py-2.5 rounded-2xl text-sm font-bold transition">Delete</button>
                 </div>
             </div>
-
-            <div class="mt-8 border-t border-gray-200/60 pt-6 flex justify-between items-center hidden" id="player-nav-container">
-                <button id="btn-back-upload" onclick="goHome()" class="text-gray-500 hover:text-gray-900 font-semibold text-sm flex items-center gap-2 transition-colors hidden">
-                    &larr; Upload new video
-                </button>
-                <button id="btn-back-home" onclick="goHome()" class="text-gray-500 hover:text-gray-900 font-semibold text-sm flex items-center gap-2 transition-colors hidden">
-                    &larr; Back to Home
-                </button>
+            
+            <div class="text-center mt-4 hidden" id="back-home-container">
+                <button onclick="goHome()" class="text-gray-500 hover:text-black font-semibold text-sm">&larr; Back to Home</button>
             </div>
         </div>
 
-        <!-- 5. VIEW: 404 (Not Found) -->
-        <div id="view-404" class="view text-center mt-10 md:mt-20">
-            <div class="w-20 h-20 bg-gray-100 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                <svg class="w-10 h-10 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-            </div>
-            <h1 class="font-heading text-4xl md:text-5xl font-bold text-gray-900 mb-3 tracking-tight">Video not found</h1>
-            <p class="text-gray-500 mb-8 max-w-sm mx-auto text-base">The link might be broken, or the video has been deleted by the owner.</p>
-            <button onclick="goHome()" class="bg-gray-900 hover:bg-black text-white px-6 py-3 rounded-xl font-semibold transition-colors inline-flex items-center gap-2 shadow-sm">
-                Go to Homepage
+        <!-- 3. VIEW: 404 NOT FOUND -->
+        <div id="view-404" class="view justify-center items-center text-center">
+            <h1 class="text-6xl font-extrabold text-gray-900 mb-4">404</h1>
+            <p class="text-gray-500 font-medium mb-8 text-lg">File not found or has been deleted.</p>
+            <button onclick="goHome()" class="bg-black text-white px-8 py-3.5 rounded-full font-bold hover:bg-gray-800 transition">
+                Back to Home
             </button>
         </div>
 
-        <!-- 6. VIEW: TERMS OF SERVICE -->
-        <div id="view-tos" class="view w-full max-w-3xl mx-auto">
-            <div class="bg-white p-8 md:p-12 rounded-3xl shadow-human border border-gray-100">
-                <h1 class="font-heading text-2xl md:text-3xl font-bold mb-6 text-gray-900">Terms of Service</h1>
-                <div class="space-y-6 text-gray-600 leading-relaxed text-sm md:text-base">
-                    <div>
-                        <strong class="text-gray-900 block mb-1">1. Acceptance of Terms</strong>
-                        <p>By accessing and using Vidoo, you accept and agree to be bound by the terms and provision of this agreement.</p>
-                    </div>
-                    <div>
-                        <strong class="text-gray-900 block mb-1">2. User Accounts</strong>
-                        <p>To upload videos, you must authenticate using a valid Google account. You are responsible for any activity that occurs under your account.</p>
-                    </div>
-                    <div>
-                        <strong class="text-gray-900 block mb-1">3. Content Policy & Prohibited Content</strong>
-                        <p>You may not upload videos that contain:</p>
-                        <ul class="list-disc pl-5 mt-2 space-y-1 text-gray-500">
-                            <li>Gore, extreme violence, or graphic death.</li>
-                            <li>Child exploitation material.</li>
-                            <li>Non-consensual intimate imagery.</li>
-                            <li>Content that promotes terrorism or illegal acts.</li>
-                            <li>Copyrighted material without permission.</li>
-                        </ul>
-                    </div>
-                    <div>
-                        <strong class="text-gray-900 block mb-1">4. Moderation & Reporting</strong>
-                        <p>Users can report content violating our policies. We reserve the right to remove any video at any time without prior notice if it violates our Terms of Service.</p>
-                    </div>
-                </div>
-                
-                <div class="mt-10 pt-6 border-t border-gray-100">
-                    <!-- FIXED BACK BUTTON BUG -->
-                    <button onclick="closeTos()" class="bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-2.5 rounded-lg font-semibold transition-colors w-fit text-sm">
-                        &larr; Go Back
-                    </button>
-                </div>
+        <!-- 4. VIEW: TERMS OF SERVICE -->
+        <div id="view-tos" class="view w-full pt-10">
+            <h1 class="text-3xl font-extrabold text-gray-900 mb-8">Terms of Service</h1>
+            <div class="space-y-6 text-gray-700 font-medium text-sm md:text-base leading-relaxed">
+                <p><strong>1. Acceptance of Terms:</strong> By using Vidoo, you agree to these terms of service.</p>
+                <p><strong>2. Content Policy:</strong> Uploading videos containing extreme violence, child exploitation, non-consensual intimate content, or illegal material is strictly prohibited.</p>
+                <p><strong>3. Copyright:</strong> You must own the full rights to the videos you upload. Copyright infringement may result in video deletion.</p>
+                <p><strong>4. Moderation:</strong> We reserve the right to remove videos at any time without notice if they violate our policies.</p>
+            </div>
+            <div class="mt-12">
+                <button onclick="closeTos()" class="text-gray-500 hover:text-black font-bold flex items-center gap-2">
+                    &larr; Go Back
+                </button>
             </div>
         </div>
 
     </main>
 
     <!-- FOOTER -->
-    <footer class="w-full border-t border-gray-200/60 bg-transparent py-6 mt-auto">
-        <div class="max-w-4xl mx-auto px-6 flex flex-col sm:flex-row justify-between items-center gap-4">
-            <p class="text-gray-400 text-sm font-medium">© 2026 Vidoo. All rights reserved.</p>
-            <div class="flex gap-6">
-                <button onclick="navigate('tos')" class="text-sm text-gray-500 hover:text-gray-800 transition-colors font-medium">Terms of Service</button>
-            </div>
-        </div>
+    <footer class="w-full py-8 mt-auto flex flex-col items-center justify-center gap-2">
+        <p class="text-gray-500 text-sm font-semibold">© 2026 Vidoo. All rights reserved.</p>
+        <button onclick="navigate('tos')" class="text-gray-500 hover:text-black text-sm font-semibold">Terms of Service</button>
     </footer>
 
-    <!-- MODAL: DELETE VIDEO -->
-    <div id="delete-modal" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-200">
-        <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-sm shadow-2xl transform scale-95 transition-transform duration-200" id="delete-modal-box">
-            <h3 class="font-heading text-xl font-bold text-gray-900 mb-2">Delete Video</h3>
-            <p class="text-gray-500 text-sm mb-8 leading-relaxed">This video will be permanently deleted from our servers. This action cannot be undone.</p>
-            <div class="flex gap-3">
-                <button onclick="hideModal('delete-modal')" id="btn-cancel-del" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 rounded-xl transition-colors text-sm">Cancel</button>
-                <button onclick="deleteVideo()" id="btn-confirm-del" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm">Delete</button>
-            </div>
-        </div>
-    </div>
+    <!-- ================= MODALS (2-STEP UPLOAD SYSTEM) ================= -->
+    <div id="upload-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
+        <div class="bg-white rounded-3xl p-8 w-full max-w-[400px] shadow-2xl relative text-center transform transition-all scale-100">
+            <!-- Close Button -->
+            <button onclick="cancelUpload()" class="absolute top-4 right-4 text-gray-400 hover:text-black p-1">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+            </button>
 
-    <!-- MODAL: REPORT VIDEO -->
-    <div id="report-modal" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-200">
-        <div class="bg-white rounded-3xl p-6 md:p-8 w-full max-w-sm shadow-2xl transform scale-95 transition-transform duration-200" id="report-modal-box">
-            <h3 class="font-heading text-xl font-bold text-gray-900 mb-1">Report Video</h3>
-            <p class="text-gray-500 text-sm mb-6">Why does this video violate our policies?</p>
-            
-            <div class="space-y-2 mb-6">
-                <label class="flex items-center gap-3 p-3.5 border border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                    <input type="radio" name="report_reason" value="Gore / Graphic Violence" class="w-4 h-4 text-brand-600 focus:ring-brand-500">
-                    <span class="text-gray-700 font-medium text-sm">Gore / Graphic Violence</span>
-                </label>
-                <label class="flex items-center gap-3 p-3.5 border border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                    <input type="radio" name="report_reason" value="Abuse / Harassment" class="w-4 h-4 text-brand-600 focus:ring-brand-500">
-                    <span class="text-gray-700 font-medium text-sm">Abuse / Harassment</span>
-                </label>
-                <label class="flex items-center gap-3 p-3.5 border border-gray-100 rounded-xl cursor-pointer hover:bg-gray-50 transition-colors">
-                    <input type="radio" name="report_reason" value="Illegal Content" class="w-4 h-4 text-brand-600 focus:ring-brand-500">
-                    <span class="text-gray-700 font-medium text-sm">Illegal Content</span>
-                </label>
-                <textarea id="report-details" class="w-full border border-gray-200 rounded-xl p-3.5 text-sm focus:ring-2 focus:ring-brand-500 focus:border-brand-500 outline-none mt-2 bg-gray-50 placeholder-gray-400" rows="2" placeholder="Additional details..."></textarea>
+            <!-- STATE 1: UPLOADING -->
+            <div id="upload-state-1" class="block">
+                <h3 class="text-2xl font-bold text-gray-900 mb-6">Uploading</h3>
+                
+                <!-- Progress Bar UI -->
+                <div class="w-full bg-gray-200 rounded-full h-2.5 mb-3 overflow-hidden">
+                    <div id="modal-progress-bar" class="bg-black h-full rounded-full transition-all duration-150" style="width: 0%"></div>
+                </div>
+                <p id="modal-progress-text" class="text-gray-800 font-bold mb-4">0%</p>
+                <p class="text-gray-500 text-sm font-medium">Please wait while your file uploads...</p>
             </div>
 
-            <div class="flex gap-3">
-                <button onclick="hideModal('report-modal')" id="btn-cancel-rep" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 rounded-xl transition-colors text-sm">Cancel</button>
-                <button onclick="submitReport()" id="btn-submit-rep" class="flex-1 bg-gray-900 hover:bg-black text-white font-semibold py-3 rounded-xl transition-colors flex items-center justify-center gap-2 text-sm">Submit</button>
+            <!-- STATE 2: PROCESSING -->
+            <div id="upload-state-2" class="hidden">
+                <h3 class="text-2xl font-bold text-gray-900 mb-8">Processing</h3>
+                <div class="flex justify-center mb-6">
+                    <div class="spinner-ring"></div>
+                </div>
+                <p class="text-gray-500 text-sm font-medium">Please wait while we process your file...</p>
             </div>
         </div>
     </div>
 
     <!-- TOAST NOTIFICATION -->
-    <div id="toast" class="fixed bottom-6 left-1/2 -translate-x-1/2 bg-gray-900 text-white px-6 py-3 rounded-full shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-2 text-sm font-semibold whitespace-nowrap">
-        <span id="toast-message">Notification</span>
+    <div id="toast" class="fixed bottom-8 left-1/2 -translate-x-1/2 bg-black text-white px-6 py-3 rounded-full shadow-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center text-sm font-bold whitespace-nowrap">
+        <span id="toast-message">Message</span>
     </div>
 
     <!-- JAVASCRIPT LOGIC -->
     <script>
-        // 1. CONFIGURATION
+        // CONFIG FIREBASE & CLOUDFLARE
         const firebaseConfig = {
             apiKey: "AIzaSyD0b0V0KbUahasbtcJF_F0hTIR6yeti54g",
             authDomain: "adexsoft-web.firebaseapp.com",
@@ -337,267 +213,224 @@
         let idToken = null;
         let isViewingSharedVideo = false;
         let currentVideoParam = null;
+        let activeXhr = null; 
 
-        const views = document.querySelectorAll('.view');
         const fileInput = document.getElementById('file-input');
-        const dropZone = document.getElementById('drop-zone');
-        const progressBar = document.getElementById('progress-bar');
-        const progressText = document.getElementById('upload-progress');
         const videoPlayer = document.getElementById('video-player');
-        const videoErrorMsg = document.getElementById('video-error-msg');
-        const shareUrl = document.getElementById('share-url');
-        const copyBtn = document.getElementById('copy-btn');
-        const btnDelete = document.getElementById('btn-delete');
-        const playerNavContainer = document.getElementById('player-nav-container');
         
-        // Video Error Handler (Shows 404 overlay inside player if video fails to load)
-        videoPlayer.addEventListener('error', function() {
-            videoPlayer.classList.add('hidden');
-            videoErrorMsg.classList.remove('hidden');
-        });
-
-        // 2. INITIAL ROUTING (?v= parameter)
+        // --- INITIAL ROUTING ---
         window.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
-            
-            if (window.location.search && !urlParams.has('v')) { 
-                navigate('404'); 
-                return; 
-            }
+            if (window.location.search && !urlParams.has('v')) { navigate('404'); return; }
 
             const videoParam = urlParams.get('v');
             if (videoParam) {
-                if (!videoParam.includes('/') || !videoParam.endsWith('.mp4')) { 
-                    navigate('404'); 
-                    return; 
-                }
+                if (!videoParam.includes('/') || !videoParam.endsWith('.mp4')) { navigate('404'); return; }
                 
                 currentVideoParam = videoParam;
                 isViewingSharedVideo = true;
                 
-                videoPlayer.classList.remove('hidden');
-                videoErrorMsg.classList.add('hidden');
                 videoPlayer.src = `${API_BASE_URL}/v/${videoParam}`;
-                shareUrl.value = window.location.href;
+                document.getElementById('share-url').value = window.location.href;
                 
-                playerNavContainer.classList.remove('hidden');
-                document.getElementById('btn-back-upload').classList.add('hidden');
-                document.getElementById('btn-back-home').classList.remove('hidden');
-                
-                btnDelete.classList.add('hidden'); btnDelete.classList.remove('flex');
-                
+                document.getElementById('back-home-container').classList.remove('hidden');
+                document.getElementById('btn-delete').classList.add('hidden');
                 navigate('player');
+            } else {
+                navigate('home');
             }
         });
 
-        // 3. FIREBASE AUTH LISTENER
+        // Video Error -> Throw to 404
+        videoPlayer.addEventListener('error', function() {
+            navigate('404');
+        });
+
+        // --- AUTH ---
         auth.onAuthStateChanged(async (user) => {
+            currentUser = user;
             if (user) {
-                currentUser = user; idToken = await user.getIdToken();
+                idToken = await user.getIdToken();
                 document.getElementById('nav-logged-out').classList.add('hidden'); 
                 document.getElementById('nav-logged-in').classList.remove('hidden'); 
                 document.getElementById('nav-logged-in').classList.add('flex');
                 
-                const avInit = document.getElementById('user-avatar-initial');
-                const avImg = document.getElementById('user-avatar-img');
-                if (user.photoURL) { avImg.src = user.photoURL; avImg.classList.remove('hidden'); avInit.classList.add('hidden'); } 
-                else { avInit.innerText = user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U'; avImg.classList.add('hidden'); avInit.classList.remove('hidden'); }
-
-                if (document.getElementById('view-404').classList.contains('active')) return;
-                if (document.getElementById('view-tos').classList.contains('active')) return;
-                
-                if (!isViewingSharedVideo) { navigate('upload'); } 
-                else if (currentVideoParam && currentVideoParam.startsWith(user.uid)) {
-                    btnDelete.classList.remove('hidden'); btnDelete.classList.add('flex');
+                // Show delete button if owner
+                if (isViewingSharedVideo && currentVideoParam && currentVideoParam.startsWith(user.uid)) {
+                    document.getElementById('btn-delete').classList.remove('hidden');
                 }
             } else {
-                currentUser = null; idToken = null;
+                idToken = null;
                 document.getElementById('nav-logged-out').classList.remove('hidden'); 
-                document.getElementById('nav-logged-in').classList.add('hidden'); 
-                document.getElementById('nav-logged-in').classList.remove('flex');
-                
-                if (document.getElementById('view-404').classList.contains('active')) return;
-                if (document.getElementById('view-tos').classList.contains('active')) return;
-                if (!isViewingSharedVideo) navigate('login');
+                document.getElementById('nav-logged-in').classList.add('hidden');
             }
         });
 
+        async function loginWithGoogle() { try { await auth.signInWithPopup(provider); } catch (err) { showToast("Sign in failed"); } }
+        async function handleLogout() { await auth.signOut(); goHome(); }
+
+        // --- NAVIGATION ---
         function navigate(viewId) {
-            views.forEach(v => {
-                v.classList.remove('active');
-                v.style.display = 'none';
-            });
+            document.querySelectorAll('.view').forEach(v => { v.classList.remove('active'); v.style.display = 'none'; });
             const target = document.getElementById(`view-${viewId}`);
-            if(target) {
-                target.style.display = 'block';
-                // Trigger reflow for animation
-                void target.offsetWidth; 
-                target.classList.add('active');
-            } else {
-                const v404 = document.getElementById('view-404');
-                v404.style.display = 'block';
-                void v404.offsetWidth;
-                v404.classList.add('active');
-            }
+            if(target) { target.style.display = 'flex'; target.classList.add('active'); }
         }
 
         function goHome() {
             window.history.replaceState({}, document.title, window.location.pathname);
             isViewingSharedVideo = false; currentVideoParam = null;
             videoPlayer.pause(); videoPlayer.removeAttribute('src'); videoPlayer.load();
-            navigate(currentUser ? 'upload' : 'login');
+            navigate('home');
         }
 
-        // BUG FIX: TOS BACK BUTTON
         function closeTos() {
-            if (isViewingSharedVideo && currentVideoParam) {
-                navigate('player');
-            } else {
-                navigate(currentUser ? 'upload' : 'login');
-            }
+            if (isViewingSharedVideo && currentVideoParam) navigate('player'); else navigate('home');
         }
 
-        async function loginWithGoogle() { try { await auth.signInWithPopup(provider); } catch (err) { showToast(err.message, true); } }
-        async function handleLogout() { try { await auth.signOut(); goHome(); } catch (err) {} }
-
-        // 4. UPLOAD LOGIC
-        // Trigger click on dropzone
-        dropZone.addEventListener('click', () => { fileInput.click(); });
-        fileInput.addEventListener('change', handleFileSelect);
-        dropZone.addEventListener('dragover', (e) => { e.preventDefault(); dropZone.classList.add('border-brand-300', 'bg-brand-50/50'); });
-        dropZone.addEventListener('dragleave', () => { dropZone.classList.remove('border-brand-300', 'bg-brand-50/50'); });
-        dropZone.addEventListener('drop', (e) => { e.preventDefault(); dropZone.classList.remove('border-brand-300', 'bg-brand-50/50'); if (e.dataTransfer.files.length > 0) { fileInput.files = e.dataTransfer.files; handleFileSelect(); } });
-
-        function handleFileSelect() {
-            if (!currentUser) { navigate('login'); return; }
-            const file = fileInput.files[0];
-            if (!file || !file.type.startsWith('video/')) { showToast('Please select a valid video file.', true); fileInput.value = ''; return; }
-            if (file.size > 100 * 1024 * 1024) { showToast('File size too large (Max 100MB).', true); fileInput.value = ''; return; }
-            uploadToR2(file);
+        // --- UPLOAD LOGIC & MODALS ---
+        function triggerUpload() {
+            if (!currentUser) { loginWithGoogle(); return; }
+            fileInput.click();
         }
 
-        async function uploadToR2(file) {
-            navigate('loading'); progressBar.style.width = `0%`; progressText.innerText = `0%`;
+        fileInput.addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (!file) return;
+            if (!file.type.startsWith('video/')) { showToast('Please select an MP4/WebM file.'); fileInput.value = ''; return; }
+            if (file.size > 100 * 1024 * 1024) { showToast('Max file size is 100MB.'); fileInput.value = ''; return; }
+            
+            uploadFile(file);
+        });
+
+        async function uploadFile(file) {
+            const modal = document.getElementById('upload-modal');
+            const state1 = document.getElementById('upload-state-1');
+            const state2 = document.getElementById('upload-state-2');
+            const pBar = document.getElementById('modal-progress-bar');
+            const pText = document.getElementById('modal-progress-text');
+            
+            modal.classList.remove('hidden');
+            state1.classList.remove('hidden'); state1.classList.add('block');
+            state2.classList.add('hidden'); state2.classList.remove('block');
+            pBar.style.width = '0%'; pText.innerText = '0%';
+
             try {
                 idToken = await currentUser.getIdToken(true);
-                const xhr = new XMLHttpRequest();
+                activeXhr = new XMLHttpRequest();
                 
-                xhr.upload.addEventListener('progress', (e) => { 
+                activeXhr.upload.addEventListener('progress', (e) => { 
                     if (e.lengthComputable) { 
                         const pct = Math.round((e.loaded / e.total) * 100); 
-                        progressBar.style.width = `${pct}%`; progressText.innerText = `${pct}%`; 
+                        pBar.style.width = `${pct}%`; pText.innerText = `${pct}%`; 
                     } 
                 });
                 
-                xhr.addEventListener('load', () => {
-                    if (xhr.status === 200 || xhr.status === 201) {
+                activeXhr.addEventListener('load', () => {
+                    if (activeXhr.status === 200 || activeXhr.status === 201) {
+                        // SWITCH TO STATE 2: PROCESSING
+                        state1.classList.add('hidden'); state1.classList.remove('block');
+                        state2.classList.remove('hidden'); state2.classList.add('block');
+                        
                         try {
-                            const data = JSON.parse(xhr.responseText);
+                            const data = JSON.parse(activeXhr.responseText);
                             const finalId = data.fileKey.replace('videos/', ''); 
-                            showVideoPlayer(finalId, currentUser.uid);
-                        } catch (e) { showToast("Failed to process video.", true); navigate('upload'); }
-                    } else { showToast("Upload failed.", true); navigate('upload'); }
-                    fileInput.value = ''; 
+                            
+                            // Delay to show "Processing" state like Videy
+                            setTimeout(() => {
+                                modal.classList.add('hidden');
+                                showVideoPlayer(finalId, currentUser.uid);
+                            }, 1200);
+
+                        } catch (e) { modal.classList.add('hidden'); showToast("Failed to process"); }
+                    } else { modal.classList.add('hidden'); showToast("Upload failed"); }
+                    fileInput.value = ''; activeXhr = null;
                 });
                 
-                xhr.addEventListener('error', () => { showToast("Network error occurred.", true); navigate('upload'); fileInput.value = ''; });
+                activeXhr.addEventListener('error', () => { modal.classList.add('hidden'); showToast("Network error"); fileInput.value = ''; activeXhr = null; });
                 
-                xhr.open('POST', `${API_BASE_URL}/upload`, true);
-                xhr.setRequestHeader('Authorization', `Bearer ${idToken}`);
-                xhr.setRequestHeader('Content-Type', file.type); 
-                xhr.send(file);
-            } catch (error) { showToast("Error: " + error.message, true); navigate('upload'); fileInput.value = ''; }
+                activeXhr.open('POST', `${API_BASE_URL}/upload`, true);
+                activeXhr.setRequestHeader('Authorization', `Bearer ${idToken}`);
+                activeXhr.setRequestHeader('Content-Type', file.type); 
+                activeXhr.send(file);
+            } catch (error) { modal.classList.add('hidden'); showToast("System error"); fileInput.value = ''; }
+        }
+
+        function cancelUpload() {
+            if(activeXhr) activeXhr.abort();
+            document.getElementById('upload-modal').classList.add('hidden');
+            fileInput.value = '';
+            showToast("Upload cancelled");
         }
 
         function showVideoPlayer(videoPath, uploaderUid) {
             currentVideoParam = videoPath;
-            videoPlayer.classList.remove('hidden'); videoErrorMsg.classList.add('hidden');
             videoPlayer.src = `${API_BASE_URL}/v/${videoPath}`;
-            shareUrl.value = `${window.location.origin}/?v=${videoPath}`; 
+            document.getElementById('share-url').value = `${window.location.origin}/?v=${videoPath}`; 
             window.history.replaceState({}, document.title, `/?v=${videoPath}`);
             isViewingSharedVideo = true;
             
-            playerNavContainer.classList.remove('hidden');
-            document.getElementById('btn-back-upload').classList.remove('hidden');
-            document.getElementById('btn-back-home').classList.add('hidden');
-            
-            if (currentUser && currentUser.uid === uploaderUid) { btnDelete.classList.remove('hidden'); btnDelete.classList.add('flex'); } 
-            else { btnDelete.classList.add('hidden'); btnDelete.classList.remove('flex'); }
+            document.getElementById('back-home-container').classList.remove('hidden');
+            if (currentUser && currentUser.uid === uploaderUid) { document.getElementById('btn-delete').classList.remove('hidden'); } 
             
             navigate('player');
         }
 
         function copyLink() {
-            shareUrl.select(); shareUrl.setSelectionRange(0, 99999);
-            try { document.execCommand('copy'); const ori = copyBtn.innerText; copyBtn.innerText = "Copied!"; copyBtn.classList.add('bg-gray-100', 'text-gray-900'); showToast("Link copied to clipboard!"); setTimeout(() => { copyBtn.innerText = ori; copyBtn.classList.remove('bg-gray-100', 'text-gray-900'); }, 2000); } catch (err) { showToast("Failed to copy", true); }
+            const input = document.getElementById('share-url');
+            input.select(); document.execCommand('copy');
+            const btn = document.getElementById('copy-btn');
+            const ori = btn.innerText; btn.innerText = "Copied!"; 
+            showToast("Link copied"); 
+            setTimeout(() => btn.innerText = ori, 2000);
         }
 
-        // 5. DELETE SYSTEM (Goes straight to 404 on success)
-        async function deleteVideo() {
-            if (!currentVideoParam || !currentUser) return;
-            const btn = document.getElementById('btn-confirm-del');
-            const oriTxt = btn.innerHTML;
-            btn.innerHTML = '<div class="spinner-sm"></div>'; btn.disabled = true;
+        // --- DELETE SYSTEM (Native Prompt) ---
+        function showDeleteModal() {
+            if(confirm("Are you sure you want to permanently delete this video?")) {
+                executeDelete();
+            }
+        }
 
+        async function executeDelete() {
+            if (!currentVideoParam || !currentUser) return;
             try {
                 idToken = await currentUser.getIdToken(true);
-                const response = await fetch(`${API_BASE_URL}/delete`, {
+                const res = await fetch(`${API_BASE_URL}/delete`, {
                     method: 'DELETE',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${idToken}` },
                     body: JSON.stringify({ videoPath: currentVideoParam })
                 });
-
-                if (response.ok) {
-                    hideModal('delete-modal');
-                    showToast("Video permanently deleted.");
-                    // BUG FIX: Ensure video stops playing
-                    videoPlayer.pause(); 
-                    videoPlayer.removeAttribute('src'); 
-                    videoPlayer.load();
-                    // Navigate to 404 immediately
+                if (res.ok) {
+                    showToast("Video deleted.");
+                    videoPlayer.pause(); videoPlayer.removeAttribute('src'); videoPlayer.load();
                     navigate('404');
-                } else {
-                    showToast("Failed to delete video.", true);
-                }
-            } catch (err) { showToast("Network error.", true); } 
-            finally { btn.innerHTML = oriTxt; btn.disabled = false; }
+                } else { showToast("Failed to delete."); }
+            } catch (err) { showToast("Connection failed."); }
         }
 
-        // 6. REPORT SYSTEM
-        async function submitReport() {
-            const reasons = document.getElementsByName('report_reason');
-            let selectedReason = "";
-            for(let i=0; i<reasons.length; i++) { if(reasons[i].checked) selectedReason = reasons[i].value; }
-            if(!selectedReason) { showToast("Please select a reason.", true); return; }
-            
-            const btn = document.getElementById('btn-submit-rep');
-            const oriTxt = btn.innerHTML;
-            btn.innerHTML = '<div class="spinner-sm"></div>'; btn.disabled = true;
+        // --- REPORT SYSTEM (Native Prompt) ---
+        function showReportModal() {
+            const reason = prompt("Please enter the reason for reporting this video (e.g., Violence, Illegal):");
+            if(reason && reason.trim() !== "") {
+                executeReport(reason);
+            }
+        }
 
+        async function executeReport(reason) {
             try {
-                const response = await fetch(`${API_BASE_URL}/report`, {
+                await fetch(`${API_BASE_URL}/report`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ videoPath: currentVideoParam, reason: selectedReason, details: document.getElementById('report-details').value })
+                    body: JSON.stringify({ videoPath: currentVideoParam, reason: reason, details: "Reported via prompt" })
                 });
-
-                if (response.ok) {
-                    showToast("Report submitted successfully.");
-                    for(let i=0; i<reasons.length; i++) reasons[i].checked = false;
-                    document.getElementById('report-details').value = '';
-                } else { showToast("Failed to submit report.", true); }
-            } catch (err) { showToast("Network error.", true); } 
-            finally { hideModal('report-modal'); btn.innerHTML = oriTxt; btn.disabled = false; }
+                showToast("Report submitted.");
+            } catch (err) { showToast("Failed to submit report."); }
         }
 
-        // UI Helpers
-        function showModal(id) { const m = document.getElementById(id); const b = document.getElementById(`${id}-box`); m.classList.remove('hidden'); void m.offsetWidth; m.classList.remove('opacity-0'); b.classList.remove('scale-95'); }
-        function hideModal(id) { const m = document.getElementById(id); const b = document.getElementById(`${id}-box`); m.classList.add('opacity-0'); b.classList.add('scale-95'); setTimeout(() => m.classList.add('hidden'), 200); }
+        // --- TOAST UI ---
         let toastTimeout;
-        function showToast(msg, isErr = false) { 
-            const t = document.getElementById('toast'); 
-            document.getElementById('toast-message').innerText = msg;
-            t.className = `fixed bottom-6 left-1/2 -translate-x-1/2 px-6 py-3 rounded-full shadow-lg transform transition-all duration-300 z-50 flex items-center text-sm font-semibold whitespace-nowrap ${isErr ? 'bg-red-500 text-white' : 'bg-gray-900 text-white'}`;
+        function showToast(msg) { 
+            const t = document.getElementById('toast'); document.getElementById('toast-message').innerText = msg;
             t.classList.remove('translate-y-20', 'opacity-0'); 
             clearTimeout(toastTimeout); toastTimeout = setTimeout(() => t.classList.add('translate-y-20', 'opacity-0'), 3000); 
         }
