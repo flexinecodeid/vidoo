@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vidoo - Simple Video Hosting</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Firebase SDK Compat (Sangat mudah digunakan langsung di HTML tunggal) -->
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.8.0/firebase-auth-compat.js"></script>
+
+    <style>
+        .loader {
+            border-top-color: #4f46e5;
+            animation: spinner 1s linear infinite;
+        }
+        @keyframes spinner {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        .fade-in {
+            animation: fadeIn 0.3s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .view {
+            display: none;
+        }
+        .view.active {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            align-items: center;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-900 font-sans min-h-screen flex flex-col selection:bg-indigo-200">
+
+    <!-- Header -->
+    <header class="w-full bg-white border-b border-gray-200 px-6 py-4 flex justify-between items-center sticky top-0 z-40 shadow-sm">
+        <div class="text-2xl font-black tracking-tighter cursor-pointer flex items-center gap-2" onclick="navigate('upload')">
+            <svg class="w-8 h-8 text-indigo-600" fill="currentColor" viewBox="0 0 24 24"><path d="M17 10.5V7c0-.55-.45-1-1-1H4c-.55 0-1 .45-1 1v10c0 .55.45 1 1 1h12c.55 0 1-.45 1-1v-3.5l4 4v-11l-4 4zM15 16H5V8h10v8z"/></svg>
+            Vidoo<span class="text-indigo-600">.</span>
+        </div>
+        <nav class="flex items-center gap-6 text-sm font-medium text-gray-600">
+            <!-- Auth State UI -->
+            <div id="nav-logged-out" class="flex">
+                <button onclick="loginWithGoogle()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-2 rounded-lg transition-colors shadow-sm">
+                    Sign In
+                </button>
+            </div>
+            <div id="nav-logged-in" class="hidden flex items-center gap-3">
+                <div class="w-8 h-8 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-700 font-bold border border-indigo-200 overflow-hidden" id="user-avatar-container">
+                    <img id="user-avatar-img" src="" alt="Avatar" class="w-full h-full object-cover hidden">
+                    <span id="user-avatar-initial">U</span>
+                </div>
+                <button onclick="handleLogout()" class="text-gray-500 hover:text-red-600 transition">Log out</button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-1 w-full max-w-4xl mx-auto p-6 flex flex-col items-center justify-center relative">
+        
+        <!-- VIEW: LOGIN -->
+        <div id="view-login" class="view fade-in max-w-md w-full my-auto">
+            <div class="bg-white p-8 rounded-2xl shadow-sm border border-gray-100 text-center w-full">
+                <h1 class="text-2xl font-bold mb-2">Welcome to Vidoo</h1>
+                <p class="text-gray-500 text-sm mb-8">Sign in with Google to start uploading and managing your videos.</p>
+                
+                <button onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-3 rounded-xl font-medium transition-colors shadow-sm">
+                    <svg class="w-5 h-5" viewBox="0 0 24 24">
+                        <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
+                        <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/>
+                        <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
+                        <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
+                    </svg>
+                    Continue with Google
+                </button>
+            </div>
+        </div>
+
+        <!-- VIEW: UPLOAD -->
+        <div id="view-upload" class="view fade-in w-full my-auto">
+            <h1 class="text-4xl font-extrabold text-center mb-3 tracking-tight text-gray-900">Share videos instantly.</h1>
+            <p class="text-gray-500 text-center mb-10 text-lg">Fast, free, and minimal. Max 100MB per file.</p>
+
+            <div 
+                id="drop-zone"
+                class="w-full max-w-2xl h-72 border-2 border-dashed border-gray-300 rounded-3xl flex flex-col items-center justify-center bg-white hover:bg-indigo-50 hover:border-indigo-400 transition-all cursor-pointer relative shadow-sm group"
+            >
+                <input type="file" id="file-input" accept="video/mp4,video/webm,video/ogg" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10">
+                <svg class="w-14 h-14 text-gray-400 group-hover:text-indigo-500 transition-colors mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"></path></svg>
+                <p class="text-xl font-semibold text-gray-700">Click to browse</p>
+                <p class="text-gray-400 mt-2">or drag and drop a video file here</p>
+            </div>
+        </div>
+
+        <!-- VIEW: LOADING -->
+        <div id="view-loading" class="view fade-in w-full my-auto">
+            <div class="w-14 h-14 border-4 border-gray-100 border-t-indigo-600 rounded-full loader mb-6"></div>
+            <h2 class="text-2xl font-bold text-gray-800">Uploading to Cloudflare R2...</h2>
+            <p class="text-gray-500 mt-2 font-medium" id="upload-progress">0%</p>
+            <div class="w-full max-w-md bg-gray-200 rounded-full h-3 mt-6 overflow-hidden">
+                <div id="progress-bar" class="bg-indigo-600 h-full rounded-full transition-all duration-300" style="width: 0%"></div>
+            </div>
+            <p class="text-sm text-gray-400 mt-4">Please don't close this tab.</p>
+        </div>
+
+        <!-- VIEW: PLAYER -->
+        <div id="view-player" class="view fade-in w-full my-auto">
+            <!-- Video Player -->
+            <div class="w-full bg-black rounded-2xl overflow-hidden shadow-xl mb-6 border border-gray-800">
+                <video id="video-player" class="w-full max-h-[65vh] object-contain" controls>
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+            
+            <!-- Link & Actions Container -->
+            <div class="w-full flex flex-col md:flex-row gap-4 justify-between items-center mb-8">
+                
+                <!-- Share Link -->
+                <div class="w-full md:w-2/3 bg-white p-2 rounded-xl shadow-sm border border-gray-200 flex items-center">
+                    <div class="px-3 text-gray-400">
+                        <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1"></path></svg>
+                    </div>
+                    <input type="text" id="share-url" readonly class="flex-1 bg-transparent border-none focus:ring-0 text-gray-700 font-medium px-2 outline-none w-full">
+                    <button onclick="copyLink()" id="copy-btn" class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2.5 rounded-lg text-sm font-semibold transition-colors whitespace-nowrap shadow-sm">
+                        Copy Link
+                    </button>
+                </div>
+
+                <!-- Action Buttons (Delete & Report) -->
+                <div class="flex gap-3 w-full md:w-auto">
+                    <button onclick="showModal('report-modal')" class="flex-1 md:flex-none flex items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-orange-50 hover:text-orange-600 hover:border-orange-300 text-gray-600 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+                        Report
+                    </button>
+                    <!-- Delete button (uploader only) -->
+                    <button id="btn-delete" onclick="showModal('delete-modal')" class="hidden flex-1 md:flex-none items-center justify-center gap-2 bg-white border border-gray-300 hover:bg-red-50 hover:text-red-600 hover:border-red-300 text-gray-600 px-4 py-2.5 rounded-xl text-sm font-medium transition-colors">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"></path></svg>
+                        Delete
+                    </button>
+                </div>
+            </div>
+
+            <button onclick="navigate('upload')" class="text-indigo-600 font-semibold hover:underline flex items-center gap-2 mb-8">
+                &larr; Upload another video
+            </button>
+        </div>
+
+        <!-- VIEW: TERMS OF SERVICE -->
+        <div id="view-tos" class="view fade-in w-full max-w-3xl bg-white p-8 rounded-2xl shadow-sm border border-gray-200 my-auto">
+            <h1 class="text-3xl font-bold mb-6 border-b pb-4">Terms of Service</h1>
+            <div class="space-y-4 text-gray-600 leading-relaxed">
+                <p><strong>1. Acceptance of Terms</strong><br>By accessing and using Vidoo, you accept and agree to be bound by the terms and provision of this agreement.</p>
+                <p><strong>2. User Accounts</strong><br>To upload videos, you must authenticate using a valid Google account. You are responsible for any activity that occurs under your account.</p>
+                <p><strong>3. Content Policy & Prohibited Content</strong><br>You may not upload videos that contain:
+                    <ul class="list-disc pl-6 mt-2 space-y-1">
+                        <li>Gore, extreme violence, or graphic death.</li>
+                        <li>Child exploitation material.</li>
+                        <li>Non-consensual intimate imagery.</li>
+                        <li>Content that promotes terrorism or illegal acts.</li>
+                        <li>Copyrighted material without permission.</li>
+                    </ul>
+                </p>
+                <p><strong>4. Moderation & Reporting</strong><br>Users can report content violating our policies. We reserve the right to remove any video at any time without prior notice if it violates our Terms of Service.</p>
+            </div>
+            <button onclick="navigate(currentUser ? 'upload' : 'login')" class="mt-8 bg-gray-100 hover:bg-gray-200 text-gray-800 px-6 py-2 rounded-lg font-medium transition-colors w-fit">
+                Back
+            </button>
+        </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="w-full border-t border-gray-200 bg-white py-6 mt-auto">
+        <div class="max-w-4xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-4">
+            <p class="text-gray-500 text-sm">© 2026 Vidoo. All rights reserved.</p>
+            <div class="flex gap-6">
+                <button onclick="navigate('tos')" class="text-sm text-gray-500 hover:text-indigo-600 transition font-medium">Terms of Service</button>
+                <a href="#" class="text-sm text-gray-500 hover:text-indigo-600 transition font-medium">Privacy</a>
+                <a href="#" class="text-sm text-gray-500 hover:text-indigo-600 transition font-medium">Contact</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- MODALS -->
+    <!-- Delete Confirmation Modal -->
+    <div id="delete-modal" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-sm shadow-2xl transform scale-95 transition-transform duration-300" id="delete-modal-box">
+            <div class="w-12 h-12 rounded-full bg-red-100 text-red-600 flex items-center justify-center mb-4">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path></svg>
+            </div>
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Delete Video?</h3>
+            <p class="text-gray-500 text-sm mb-6">Are you sure you want to delete this video? This action cannot be undone and the link will permanently break.</p>
+            <div class="flex gap-3">
+                <button onclick="hideModal('delete-modal')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2.5 rounded-xl transition-colors">Cancel</button>
+                <button onclick="deleteVideo()" class="flex-1 bg-red-600 hover:bg-red-700 text-white font-medium py-2.5 rounded-xl transition-colors">Yes, Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Report Modal -->
+    <div id="report-modal" class="fixed inset-0 bg-gray-900/40 backdrop-blur-sm z-50 hidden flex items-center justify-center p-4 opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl transform scale-95 transition-transform duration-300" id="report-modal-box">
+            <h3 class="text-xl font-bold text-gray-900 mb-2">Report Video</h3>
+            <p class="text-gray-500 text-sm mb-4">Please let us know why this video violates our terms of service.</p>
+            
+            <div class="space-y-3 mb-6">
+                <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50">
+                    <input type="radio" name="report_reason" value="gore" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500">
+                    <span class="text-gray-700 font-medium">Gore / Graphic Violence</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50">
+                    <input type="radio" name="report_reason" value="abuse" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500">
+                    <span class="text-gray-700 font-medium">Abuse / Harassment</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 border border-gray-200 rounded-xl cursor-pointer hover:bg-gray-50">
+                    <input type="radio" name="report_reason" value="illegal" class="w-4 h-4 text-indigo-600 focus:ring-indigo-500">
+                    <span class="text-gray-700 font-medium">Illegal Content</span>
+                </label>
+                <textarea class="w-full border border-gray-300 rounded-xl p-3 text-sm focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none" rows="3" placeholder="Additional details (optional)..."></textarea>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="hideModal('report-modal')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2.5 rounded-xl transition-colors">Cancel</button>
+                <button onclick="submitReport()" class="flex-1 bg-gray-900 hover:bg-black text-white font-medium py-2.5 rounded-xl transition-colors">Submit Report</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification -->
+    <div id="toast" class="fixed bottom-6 right-6 bg-gray-900 text-white px-5 py-3 rounded-xl shadow-2xl transform translate-y-20 opacity-0 transition-all duration-300 z-50 flex items-center gap-3 font-medium">
+        <svg class="w-5 h-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>
+        <span id="toast-message">Action successful!</span>
+    </div>
+
+    <script>
+        // --- KONFIGURASI UTAMA ---
+        // 1. GANTI DENGAN KODE FIREBASE CONFIG MILIKMU!
+        // For Firebase JS SDK v7.20.0 and later, measurementId is optional
+  const firebaseConfig = {
+  apiKey: "AIzaSyD0b0V0KbUahasbtcJF_F0hTIR6yeti54g",
+  authDomain: "adexsoft-web.firebaseapp.com",
+  projectId: "adexsoft-web",
+  storageBucket: "adexsoft-web.firebasestorage.app",
+  messagingSenderId: "479632502802",
+  appId: "1:479632502802:web:c5f1d7322529fb303d28cb",
+  measurementId: "G-MG04K5HW5X"
+};
+
+        // 2. GANTI DENGAN URL WORKER CLOUDFLARE MU!
+        const API_BASE_URL = 'https://vidoo.pputu1972.workers.dev'; 
+
+        // Inisialisasi Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const provider = new firebase.auth.GoogleAuthProvider();
+
+        let currentUser = null; 
+        let idToken = null;
+        let uploaderUidOfCurrentVideo = null;
+
+        const views = document.querySelectorAll('.view');
+        const fileInput = document.getElementById('file-input');
+        const dropZone = document.getElementById('drop-zone');
+        const progressBar = document.getElementById('progress-bar');
+        const progressText = document.getElementById('upload-progress');
+        const videoPlayer = document.getElementById('video-player');
+        const shareUrl = document.getElementById('share-url');
+        const copyBtn = document.getElementById('copy-btn');
+        const toast = document.getElementById('toast');
+        const toastMessage = document.getElementById('toast-message');
+        const btnDelete = document.getElementById('btn-delete');
+        
+        // Navbar elements
+        const navLoggedOut = document.getElementById('nav-logged-out');
+        const navLoggedIn = document.getElementById('nav-logged-in');
+        const userAvatarImg = document.getElementById('user-avatar-img');
+        const userAvatarInitial = document.getElementById('user-avatar-initial');
+
+        // Pantau Status Login Firebase secara Realtime
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                currentUser = user;
+                // Ambil ID Token Firebase untuk dikirimkan ke Cloudflare Worker sebagai bukti valid login
+                idToken = await user.getIdToken();
+                updateUIForUser(user);
+                navigate('upload');
+            } else {
+                currentUser = null;
+                idToken = null;
+                updateUIForLoggedOut();
+                navigate('login');
+            }
+        });
+
+        // --- Navigation ---
+        function navigate(viewId) {
+            if (viewId === 'upload' && !currentUser) {
+                viewId = 'login';
+            }
+            views.forEach(view => {
+                view.classList.remove('active');
+            });
+            document.getElementById(`view-${viewId}`).classList.add('active');
+            window.scrollTo(0, 0);
+        }
+
+        // --- Firebase Google Login / Logout ---
+        async function loginWithGoogle() {
+            try {
+                await auth.signInWithPopup(provider);
+                showToast("Successfully signed in with Google", false);
+            } catch (error) {
+                showToast("Login failed: " + error.message, true);
+            }
+        }
+
+        async function handleLogout() {
+            try {
+                await auth.signOut();
+                showToast("Logged out successfully", false);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        // Update UI berdasarkan status Auth
+        function updateUIForUser(user) {
+            navLoggedOut.classList.add('hidden');
+            navLoggedIn.classList.remove('hidden');
+            navLoggedIn.classList.add('flex');
+
+            if (user.photoURL) {
+                userAvatarImg.src = user.photoURL;
+                userAvatarImg.classList.remove('hidden');
+                userAvatarInitial.classList.add('hidden');
+            } else {
+                userAvatarInitial.innerText = user.displayName ? user.displayName.charAt(0).toUpperCase() : 'U';
+                userAvatarImg.classList.add('hidden');
+                userAvatarInitial.classList.remove('hidden');
+            }
+        }
+
+        function updateUIForLoggedOut() {
+            navLoggedOut.classList.remove('hidden');
+            navLoggedIn.classList.add('hidden');
+            navLoggedIn.classList.remove('flex');
+        }
+
+        // --- Drag & Drop ---
+        fileInput.addEventListener('change', handleFileSelect);
+        
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('border-indigo-500', 'bg-indigo-50');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('border-indigo-500', 'bg-indigo-50');
+            if (e.dataTransfer.files.length > 0) {
+                fileInput.files = e.dataTransfer.files;
+                handleFileSelect();
+            }
+        });
+
+        function handleFileSelect() {
+            if (!currentUser) {
+                navigate('login');
+                return;
+            }
+
+            const file = fileInput.files[0];
+            if (!file || !file.type.startsWith('video/')) {
+                alert('Please select a valid video file (MP4, WebM, etc).');
+                fileInput.value = ''; 
+                return;
+            }
+            if (file.size > 100 * 1024 * 1024) {
+                alert('File size too large. Maximum is 100MB.');
+                fileInput.value = '';
+                return;
+            }
+            uploadToR2(file);
+        }
+
+        // --- UPLOAD FISIK SEBENARNYA KE CLOUDFLARE R2 ---
+        async function uploadToR2(file) {
+            navigate('loading');
+            progressBar.style.width = `0%`;
+            progressText.innerText = `0%`;
+
+            try {
+                // Ambil ID Token Firebase terbaru agar tidak expired
+                idToken = await currentUser.getIdToken(true);
+
+                // 1. Minta Presigned URL dari Cloudflare Worker
+                const response = await fetch(`${API_BASE_URL}/get-upload-url`, {
+                    method: 'POST',
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${idToken}` // Token dikirim agar Cloudflare Worker tahu kita login via Firebase
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorText = await response.text();
+                    throw new Error(errorText || "Akses ditolak oleh Cloudflare Worker.");
+                }
+                
+                const data = await response.json();
+                const uploadUrl = data.uploadUrl;
+                const fileKey = data.fileKey; // Format: videos/USER_ID/UUID.mp4
+
+                // 2. Upload file fisik langsung ke R2
+                const xhr = new XMLHttpRequest();
+                
+                xhr.upload.addEventListener('progress', (event) => {
+                    if (event.lengthComputable) {
+                        const percentComplete = Math.round((event.loaded / event.total) * 100);
+                        progressBar.style.width = `${percentComplete}%`;
+                        progressText.innerText = `${percentComplete}%`;
+                    }
+                });
+
+                xhr.addEventListener('load', () => {
+                    if (xhr.status === 200 || xhr.status === 201) {
+                        // Selesai upload! Bersihkan string 'videos/' di depan fileKey
+                        const finalId = fileKey.replace('videos/', '');
+                        showVideoPlayer(finalId, currentUser.uid);
+                    } else {
+                        alert("Upload failed. Status: " + xhr.status);
+                        navigate('upload');
+                    }
+                });
+
+                xhr.addEventListener('error', () => {
+                    alert("Network error occurred during upload.");
+                    navigate('upload');
+                });
+
+                xhr.open('PUT', uploadUrl, true);
+                xhr.setRequestHeader('Content-Type', file.type); 
+                xhr.send(file);
+
+            } catch (error) {
+                console.error(error);
+                alert("Upload Gagal: " + error.message);
+                navigate('upload');
+            }
+        }
+
+        function showVideoPlayer(videoPath, uploaderUid) {
+            // Path video dinamis: USER_ID/UUID.mp4
+            const finalVideoUrl = `${API_BASE_URL}/v/${videoPath}`;
+            videoPlayer.src = finalVideoUrl;
+            
+            // Link Share URL
+            shareUrl.value = `${window.location.origin}/v/${videoPath}`; 
+            
+            uploaderUidOfCurrentVideo = uploaderUid;
+
+            // Tombol hapus hanya muncul jika pemilik video adalah user yang login
+            if (currentUser && currentUser.uid === uploaderUid) {
+                btnDelete.classList.remove('hidden');
+                btnDelete.classList.add('flex');
+            } else {
+                btnDelete.classList.add('hidden');
+                btnDelete.classList.remove('flex');
+            }
+
+            navigate('player');
+        }
+
+        // --- Actions (Copy, Report, Delete) ---
+        function copyLink() {
+            shareUrl.select();
+            shareUrl.setSelectionRange(0, 99999);
+            try {
+                document.execCommand('copy');
+                const originalText = copyBtn.innerText;
+                copyBtn.innerText = "Copied!";
+                copyBtn.classList.replace('bg-indigo-600', 'bg-green-600');
+                copyBtn.classList.replace('hover:bg-indigo-700', 'hover:bg-green-700');
+                showToast("Link copied to clipboard!");
+                
+                setTimeout(() => {
+                    copyBtn.innerText = originalText;
+                    copyBtn.classList.replace('bg-green-600', 'bg-indigo-600');
+                    copyBtn.classList.replace('hover:bg-green-700', 'hover:bg-indigo-700');
+                }, 2000);
+            } catch (err) {
+                alert("Failed to copy link");
+            }
+        }
+
+        function deleteVideo() {
+            // Di sini kamu bisa menambahkan fetch request DELETE ke Cloudflare Worker
+            hideModal('delete-modal');
+            videoPlayer.pause();
+            videoPlayer.removeAttribute('src');
+            fileInput.value = '';
+            progressBar.style.width = '0%';
+            progressText.innerText = '0%';
+            
+            showToast("Video permanently deleted.", true);
+            navigate('upload');
+        }
+
+        function submitReport() {
+            const reasons = document.getElementsByName('report_reason');
+            let selected = false;
+            for(let i=0; i<reasons.length; i++) {
+                if(reasons[i].checked) selected = true;
+            }
+
+            if(!selected) {
+                alert("Please select a reason for reporting.");
+                return;
+            }
+
+            hideModal('report-modal');
+            
+            for(let i=0; i<reasons.length; i++) reasons[i].checked = false;
+            document.querySelector('#report-modal textarea').value = '';
+
+            showToast("Report submitted successfully. We will review it shortly.", false);
+        }
+
+        // --- Modals & Toasts ---
+        function showModal(id) {
+            const modal = document.getElementById(id);
+            const box = document.getElementById(`${id}-box`);
+            modal.classList.remove('hidden');
+            void modal.offsetWidth;
+            modal.classList.remove('opacity-0');
+            box.classList.remove('scale-95');
+        }
+
+        function hideModal(id) {
+            const modal = document.getElementById(id);
+            const box = document.getElementById(`${id}-box`);
+            modal.classList.add('opacity-0');
+            box.classList.add('scale-95');
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        let toastTimeout;
+        function showToast(message, isError = false) {
+            toastMessage.innerText = message;
+            const svg = toast.querySelector('svg');
+            if(isError) {
+                svg.classList.replace('text-green-400', 'text-red-400');
+                svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>';
+            } else {
+                svg.classList.replace('text-red-400', 'text-green-400');
+                svg.innerHTML = '<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>';
+            }
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            clearTimeout(toastTimeout);
+            toastTimeout = setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+
+    </script>
+</body>
+</html>
