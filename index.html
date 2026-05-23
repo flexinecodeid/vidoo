@@ -396,68 +396,57 @@
 
         // --- UPLOAD FISIK SEBENARNYA KE CLOUDFLARE R2 ---
         async function uploadToR2(file) {
-            navigate('loading');
-            progressBar.style.width = `0%`;
-            progressText.innerText = `0%`;
+    navigate('loading');
+    progressBar.style.width = `0%`;
+    progressText.innerText = `0%`;
 
-            try {
-                // Ambil ID Token Firebase terbaru agar tidak expired
-                idToken = await currentUser.getIdToken(true);
+    try {
+        // Ambil token Firebase terbaru
+        idToken = await currentUser.getIdToken(true);
 
-                // 1. Minta Presigned URL dari Cloudflare Worker
-                const response = await fetch(`${API_BASE_URL}/get-upload-url`, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${idToken}` // Token dikirim agar Cloudflare Worker tahu kita login via Firebase
-                    }
-                });
+        const xhr = new XMLHttpRequest();
+        
+        // Pantau progres upload secara real-time
+        xhr.upload.addEventListener('progress', (event) => {
+            if (event.lengthComputable) {
+                const percentComplete = Math.round((event.loaded / event.total) * 100);
+                progressBar.style.width = `${percentComplete}%`;
+                progressText.innerText = `${percentComplete}%`;
+            }
+        });
 
-                if (!response.ok) {
-                    const errorText = await response.text();
-                    throw new Error(errorText || "Akses ditolak oleh Cloudflare Worker.");
-                }
-                
-                const data = await response.json();
-                const uploadUrl = data.uploadUrl;
-                const fileKey = data.fileKey; // Format: videos/USER_ID/UUID.mp4
-
-                // 2. Upload file fisik langsung ke R2
-                const xhr = new XMLHttpRequest();
-                
-                xhr.upload.addEventListener('progress', (event) => {
-                    if (event.lengthComputable) {
-                        const percentComplete = Math.round((event.loaded / event.total) * 100);
-                        progressBar.style.width = `${percentComplete}%`;
-                        progressText.innerText = `${percentComplete}%`;
-                    }
-                });
-
-                xhr.addEventListener('load', () => {
-                    if (xhr.status === 200 || xhr.status === 201) {
-                        // Selesai upload! Bersihkan string 'videos/' di depan fileKey
-                        const finalId = fileKey.replace('videos/', '');
-                        showVideoPlayer(finalId, currentUser.uid);
-                    } else {
-                        alert("Upload failed. Status: " + xhr.status);
-                        navigate('upload');
-                    }
-                });
-
-                xhr.addEventListener('error', () => {
-                    alert("Network error occurred during upload.");
-                    navigate('upload');
-                });
-
-                xhr.open('PUT', uploadUrl, true);
-                xhr.setRequestHeader('Content-Type', file.type); 
-                xhr.send(file);
-
-            } catch (error) {
-                console.error(error);
-                alert("Upload Gagal: " + error.message);
+        // Ketika upload selesai
+        xhr.addEventListener('load', () => {
+            if (xhr.status === 200 || xhr.status === 201) {
+                const data = JSON.parse(xhr.responseText);
+                const finalId = data.fileKey.replace('videos/', '');
+                showVideoPlayer(finalId, currentUser.uid);
+            } else {
+                alert("Upload gagal di server backend. Status: " + xhr.status);
                 navigate('upload');
             }
+        });
+
+        xhr.addEventListener('error', () => {
+            alert("Network error occurred during upload.");
+            navigate('upload');
+        });
+
+        // Langsung arahkan ke endpoint /upload milik Worker kamu
+        xhr.open('POST', `${API_BASE_URL}/upload`, true);
+        
+        // Kirimkan token otentikasi
+        xhr.setRequestHeader('Authorization', `Bearer ${idToken}`);
+        xhr.setRequestHeader('Content-Type', file.type);
+
+        // Kirim file mentah secara direct proxy
+        xhr.send(file);
+
+    } catch (error) {
+        console.error(error);
+        alert("Upload Gagal: " + error.message);
+        navigate('upload');
+    }
         }
 
         function showVideoPlayer(videoPath, uploaderUid) {
