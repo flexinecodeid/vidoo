@@ -45,7 +45,7 @@
         /* Modal Overlay */
         .modal-overlay { background-color: rgba(0, 0, 0, 0.7); }
         
-        /* Spinning Ring for Processing */
+        /* Spinning Ring for Processing & Loading inside Modals */
         .spinner-ring {
             width: 48px; height: 48px;
             border: 4px solid #f3f4f6;
@@ -53,10 +53,21 @@
             border-radius: 50%;
             animation: spin 1s linear infinite;
         }
+        .spinner-ring-sm {
+            width: 20px; height: 20px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-top-color: #fff;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
         @keyframes spin { to { transform: rotate(360deg); } }
 
         video { background-color: #000; border-radius: 12px; outline: none; }
-        input[type="text"] { outline: none; }
+        input[type="text"], textarea { outline: none; }
+        
+        /* Transition for modals */
+        .modal-content { transition: transform 0.2s ease-out, opacity 0.2s ease-out; transform: scale(0.95); opacity: 0; }
+        .modal-overlay.active .modal-content { transform: scale(1); opacity: 1; }
     </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -71,11 +82,11 @@
 
         <nav class="flex items-center gap-4 text-sm font-semibold text-gray-600">
             <div id="nav-logged-out" class="flex gap-4 items-center">
-                <button onclick="loginWithGoogle()" class="hover:text-black">Sign In</button>
+                <button onclick="loginWithGoogle()" class="hover:text-black transition">Sign In</button>
                 <button onclick="triggerUpload()" class="bg-black text-white px-5 py-2.5 rounded-full hover:bg-gray-800 transition">Upload</button>
             </div>
             <div id="nav-logged-in" class="hidden items-center gap-4">
-                <button onclick="handleLogout()" class="hover:text-black">Log Out</button>
+                <button onclick="handleLogout()" class="hover:text-black transition">Log Out</button>
                 <button onclick="triggerUpload()" class="bg-black text-white px-5 py-2.5 rounded-full hover:bg-gray-800 transition">Upload</button>
             </div>
         </nav>
@@ -113,13 +124,13 @@
                 </div>
 
                 <div class="flex gap-2">
-                    <button onclick="showReportModal()" class="flex-1 md:flex-none border-2 border-gray-200 text-gray-700 hover:bg-gray-100 px-6 py-2.5 rounded-2xl text-sm font-bold transition">Report</button>
-                    <button id="btn-delete" onclick="showDeleteModal()" class="hidden flex-1 md:flex-none border-2 border-red-100 text-red-600 hover:bg-red-50 px-6 py-2.5 rounded-2xl text-sm font-bold transition">Delete</button>
+                    <button onclick="openModal('report-modal')" class="flex-1 md:flex-none border-2 border-gray-200 text-gray-700 hover:bg-gray-100 px-6 py-2.5 rounded-2xl text-sm font-bold transition">Report</button>
+                    <button id="btn-delete" onclick="openModal('delete-modal')" class="hidden flex-1 md:flex-none border-2 border-red-100 text-red-600 hover:bg-red-50 px-6 py-2.5 rounded-2xl text-sm font-bold transition">Delete</button>
                 </div>
             </div>
             
             <div class="text-center mt-4 hidden" id="back-home-container">
-                <button onclick="goHome()" class="text-gray-500 hover:text-black font-semibold text-sm">&larr; Back to Home</button>
+                <button onclick="goHome()" class="text-gray-500 hover:text-black font-semibold text-sm transition">&larr; Back to Home</button>
             </div>
         </div>
 
@@ -132,17 +143,23 @@
             </button>
         </div>
 
-        <!-- 4. VIEW: TERMS OF SERVICE -->
-        <div id="view-tos" class="view w-full pt-10">
+        <!-- 4. VIEW: TERMS OF SERVICE (Expanded) -->
+        <div id="view-tos" class="view w-full pt-10 pb-16">
             <h1 class="text-3xl font-extrabold text-gray-900 mb-8">Terms of Service</h1>
             <div class="space-y-6 text-gray-700 font-medium text-sm md:text-base leading-relaxed">
-                <p><strong>1. Acceptance of Terms:</strong> By using Vidoo, you agree to these terms of service.</p>
-                <p><strong>2. Content Policy:</strong> Uploading videos containing extreme violence, child exploitation, non-consensual intimate content, or illegal material is strictly prohibited.</p>
-                <p><strong>3. Copyright:</strong> You must own the full rights to the videos you upload. Copyright infringement may result in video deletion.</p>
-                <p><strong>4. Moderation:</strong> We reserve the right to remove videos at any time without notice if they violate our policies.</p>
+                <p><strong>1. Acceptance of Terms:</strong> By accessing and using Vidoo, you accept and agree to be bound by the terms and provisions of this agreement. If you do not agree to abide by these terms, please do not use this service.</p>
+                <p><strong>2. Description of Service:</strong> Vidoo provides users with a simple, free platform to host and share short video files. We reserve the right to modify or discontinue the service at any time without notice.</p>
+                <p><strong>3. User Registration:</strong> To upload videos, users must authenticate via Google Sign-In. You are solely responsible for maintaining the confidentiality of your account and for all activities that occur under your account.</p>
+                <p><strong>4. Content Ownership:</strong> You retain all ownership rights to the content you upload. By uploading, you grant Vidoo a limited license to host, display, and distribute your content exclusively via the link provided to you.</p>
+                <p><strong>5. Prohibited Content:</strong> You strictly agree NOT to upload videos containing: extreme violence, gore, graphic death, child exploitation, non-consensual intimate imagery, terrorism promotion, illegal acts, or malware.</p>
+                <p><strong>6. Copyright Infringement:</strong> You must have the legal right to upload the content. Vidoo respects intellectual property rights and will promptly remove content upon receiving a valid DMCA takedown notice or equivalent legal request.</p>
+                <p><strong>7. File Limitations:</strong> We currently enforce a maximum file size of 100MB per upload and restrict file types to standard video formats (MP4, WebM). We reserve the right to delete inactive files to manage server capacity.</p>
+                <p><strong>8. Content Moderation:</strong> Vidoo employs both automated systems and community reporting to monitor content. We reserve the right to review, restrict, or permanently delete any video at our sole discretion without prior notice or explanation.</p>
+                <p><strong>9. Disclaimer of Warranties:</strong> The service is provided "as is" and "as available". Vidoo makes no warranties, express or implied, regarding the reliability, uptime, or security of the hosted videos. You use the service at your own risk.</p>
+                <p><strong>10. Limitation of Liability:</strong> In no event shall Vidoo or its developers be liable for any direct, indirect, incidental, or consequential damages resulting from the use or inability to use the service, including the loss of uploaded data.</p>
             </div>
             <div class="mt-12">
-                <button onclick="closeTos()" class="text-gray-500 hover:text-black font-bold flex items-center gap-2">
+                <button onclick="closeTos()" class="text-gray-500 hover:text-black font-bold flex items-center gap-2 transition">
                     &larr; Go Back
                 </button>
             </div>
@@ -153,22 +170,21 @@
     <!-- FOOTER -->
     <footer class="w-full py-8 mt-auto flex flex-col items-center justify-center gap-2">
         <p class="text-gray-500 text-sm font-semibold">© 2026 Vidoo. All rights reserved.</p>
-        <button onclick="navigate('tos')" class="text-gray-500 hover:text-black text-sm font-semibold">Terms of Service</button>
+        <button onclick="navigate('tos')" class="text-gray-500 hover:text-black text-sm font-semibold transition">Terms of Service</button>
     </footer>
 
-    <!-- ================= MODALS (2-STEP UPLOAD SYSTEM) ================= -->
-    <div id="upload-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4">
-        <div class="bg-white rounded-3xl p-8 w-full max-w-[400px] shadow-2xl relative text-center transform transition-all scale-100">
-            <!-- Close Button -->
-            <button onclick="cancelUpload()" class="absolute top-4 right-4 text-gray-400 hover:text-black p-1">
+    <!-- ================= MODALS ================= -->
+
+    <!-- UPLOAD MODAL -->
+    <div id="upload-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4 transition-opacity">
+        <div class="modal-content bg-white rounded-3xl p-8 w-full max-w-[400px] shadow-2xl relative text-center">
+            <button onclick="cancelUpload()" class="absolute top-4 right-4 text-gray-400 hover:text-black p-1 transition">
                 <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
             </button>
 
             <!-- STATE 1: UPLOADING -->
             <div id="upload-state-1" class="block">
                 <h3 class="text-2xl font-bold text-gray-900 mb-6">Uploading</h3>
-                
-                <!-- Progress Bar UI -->
                 <div class="w-full bg-gray-200 rounded-full h-2.5 mb-3 overflow-hidden">
                     <div id="modal-progress-bar" class="bg-black h-full rounded-full transition-all duration-150" style="width: 0%"></div>
                 </div>
@@ -183,6 +199,47 @@
                     <div class="spinner-ring"></div>
                 </div>
                 <p class="text-gray-500 text-sm font-medium">Please wait while we process your file...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- DELETE MODAL (Custom UI) -->
+    <div id="delete-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4 transition-opacity">
+        <div class="modal-content bg-white rounded-3xl p-8 w-full max-w-[400px] shadow-2xl text-center">
+            <h3 class="text-2xl font-bold text-gray-900 mb-4">Delete Video</h3>
+            <p class="text-gray-600 font-medium mb-8">Are you sure you want to permanently delete this video? This action cannot be undone.</p>
+            
+            <div class="flex gap-3">
+                <button onclick="closeModal('delete-modal')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-3 rounded-2xl font-bold transition">Cancel</button>
+                <button id="btn-confirm-del" onclick="executeDelete()" class="flex-1 bg-red-600 hover:bg-red-700 text-white px-4 py-3 rounded-2xl font-bold transition flex justify-center items-center">Delete</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- REPORT MODAL (Custom UI) -->
+    <div id="report-modal" class="fixed inset-0 modal-overlay z-50 hidden flex items-center justify-center p-4 transition-opacity">
+        <div class="modal-content bg-white rounded-3xl p-8 w-full max-w-[400px] shadow-2xl text-left">
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Report Video</h3>
+            <p class="text-gray-500 text-sm font-medium mb-6">Select a reason for reporting this content.</p>
+            
+            <div class="space-y-3 mb-8">
+                <label class="flex items-center gap-3 p-3 border-2 border-gray-100 rounded-2xl cursor-pointer hover:bg-gray-50 transition">
+                    <input type="radio" name="report_reason" value="Violence/Gore" class="w-4 h-4 text-black focus:ring-black">
+                    <span class="text-gray-800 font-bold text-sm">Violence / Gore</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 border-2 border-gray-100 rounded-2xl cursor-pointer hover:bg-gray-50 transition">
+                    <input type="radio" name="report_reason" value="Illegal Content" class="w-4 h-4 text-black focus:ring-black">
+                    <span class="text-gray-800 font-bold text-sm">Illegal Content</span>
+                </label>
+                <label class="flex items-center gap-3 p-3 border-2 border-gray-100 rounded-2xl cursor-pointer hover:bg-gray-50 transition">
+                    <input type="radio" name="report_reason" value="Copyright Violation" class="w-4 h-4 text-black focus:ring-black">
+                    <span class="text-gray-800 font-bold text-sm">Copyright Violation</span>
+                </label>
+            </div>
+
+            <div class="flex gap-3">
+                <button onclick="closeModal('report-modal')" class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-800 px-4 py-3 rounded-2xl font-bold transition">Cancel</button>
+                <button id="btn-submit-rep" onclick="executeReport()" class="flex-1 bg-black hover:bg-gray-800 text-white px-4 py-3 rounded-2xl font-bold transition flex justify-center items-center">Submit</button>
             </div>
         </div>
     </div>
@@ -287,7 +344,21 @@
             if (isViewingSharedVideo && currentVideoParam) navigate('player'); else navigate('home');
         }
 
-        // --- UPLOAD LOGIC & MODALS ---
+        // --- MODAL HELPERS (Custom UI) ---
+        function openModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.remove('hidden');
+            // Slight delay to allow display:block to apply before adding active class for CSS transition
+            setTimeout(() => { modal.classList.add('active'); }, 10);
+        }
+
+        function closeModal(id) {
+            const modal = document.getElementById(id);
+            modal.classList.remove('active');
+            setTimeout(() => { modal.classList.add('hidden'); }, 200); // match transition duration
+        }
+
+        // --- UPLOAD LOGIC ---
         function triggerUpload() {
             if (!currentUser) { loginWithGoogle(); return; }
             fileInput.click();
@@ -303,13 +374,12 @@
         });
 
         async function uploadFile(file) {
-            const modal = document.getElementById('upload-modal');
             const state1 = document.getElementById('upload-state-1');
             const state2 = document.getElementById('upload-state-2');
             const pBar = document.getElementById('modal-progress-bar');
             const pText = document.getElementById('modal-progress-text');
             
-            modal.classList.remove('hidden');
+            openModal('upload-modal');
             state1.classList.remove('hidden'); state1.classList.add('block');
             state2.classList.add('hidden'); state2.classList.remove('block');
             pBar.style.width = '0%'; pText.innerText = '0%';
@@ -327,7 +397,7 @@
                 
                 activeXhr.addEventListener('load', () => {
                     if (activeXhr.status === 200 || activeXhr.status === 201) {
-                        // SWITCH TO STATE 2: PROCESSING
+                        // SWITCH TO PROCESSING STATE
                         state1.classList.add('hidden'); state1.classList.remove('block');
                         state2.classList.remove('hidden'); state2.classList.add('block');
                         
@@ -335,29 +405,28 @@
                             const data = JSON.parse(activeXhr.responseText);
                             const finalId = data.fileKey.replace('videos/', ''); 
                             
-                            // Delay to show "Processing" state like Videy
                             setTimeout(() => {
-                                modal.classList.add('hidden');
+                                closeModal('upload-modal');
                                 showVideoPlayer(finalId, currentUser.uid);
                             }, 1200);
 
-                        } catch (e) { modal.classList.add('hidden'); showToast("Failed to process"); }
-                    } else { modal.classList.add('hidden'); showToast("Upload failed"); }
+                        } catch (e) { closeModal('upload-modal'); showToast("Failed to process"); }
+                    } else { closeModal('upload-modal'); showToast("Upload failed"); }
                     fileInput.value = ''; activeXhr = null;
                 });
                 
-                activeXhr.addEventListener('error', () => { modal.classList.add('hidden'); showToast("Network error"); fileInput.value = ''; activeXhr = null; });
+                activeXhr.addEventListener('error', () => { closeModal('upload-modal'); showToast("Network error"); fileInput.value = ''; activeXhr = null; });
                 
                 activeXhr.open('POST', `${API_BASE_URL}/upload`, true);
                 activeXhr.setRequestHeader('Authorization', `Bearer ${idToken}`);
                 activeXhr.setRequestHeader('Content-Type', file.type); 
                 activeXhr.send(file);
-            } catch (error) { modal.classList.add('hidden'); showToast("System error"); fileInput.value = ''; }
+            } catch (error) { closeModal('upload-modal'); showToast("System error"); fileInput.value = ''; }
         }
 
         function cancelUpload() {
             if(activeXhr) activeXhr.abort();
-            document.getElementById('upload-modal').classList.add('hidden');
+            closeModal('upload-modal');
             fileInput.value = '';
             showToast("Upload cancelled");
         }
@@ -384,15 +453,15 @@
             setTimeout(() => btn.innerText = ori, 2000);
         }
 
-        // --- DELETE SYSTEM (Native Prompt) ---
-        function showDeleteModal() {
-            if(confirm("Are you sure you want to permanently delete this video?")) {
-                executeDelete();
-            }
-        }
-
+        // --- CUSTOM UI DELETE SYSTEM ---
         async function executeDelete() {
             if (!currentVideoParam || !currentUser) return;
+            
+            const btn = document.getElementById('btn-confirm-del');
+            const oriText = btn.innerHTML;
+            btn.innerHTML = '<div class="spinner-ring-sm"></div>';
+            btn.disabled = true;
+
             try {
                 idToken = await currentUser.getIdToken(true);
                 const res = await fetch(`${API_BASE_URL}/delete`, {
@@ -406,25 +475,40 @@
                     navigate('404');
                 } else { showToast("Failed to delete."); }
             } catch (err) { showToast("Connection failed."); }
-        }
-
-        // --- REPORT SYSTEM (Native Prompt) ---
-        function showReportModal() {
-            const reason = prompt("Please enter the reason for reporting this video (e.g., Violence, Illegal):");
-            if(reason && reason.trim() !== "") {
-                executeReport(reason);
+            finally {
+                btn.innerHTML = oriText;
+                btn.disabled = false;
+                closeModal('delete-modal');
             }
         }
 
-        async function executeReport(reason) {
+        // --- CUSTOM UI REPORT SYSTEM ---
+        async function executeReport() {
+            const reasons = document.getElementsByName('report_reason');
+            let selectedReason = "";
+            for(let i=0; i<reasons.length; i++) { if(reasons[i].checked) selectedReason = reasons[i].value; }
+            
+            if(!selectedReason) { showToast("Please select a reason."); return; }
+
+            const btn = document.getElementById('btn-submit-rep');
+            const oriText = btn.innerHTML;
+            btn.innerHTML = '<div class="spinner-ring-sm"></div>';
+            btn.disabled = true;
+
             try {
                 await fetch(`${API_BASE_URL}/report`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ videoPath: currentVideoParam, reason: reason, details: "Reported via prompt" })
+                    body: JSON.stringify({ videoPath: currentVideoParam, reason: selectedReason })
                 });
                 showToast("Report submitted.");
+                for(let i=0; i<reasons.length; i++) reasons[i].checked = false;
             } catch (err) { showToast("Failed to submit report."); }
+            finally {
+                btn.innerHTML = oriText;
+                btn.disabled = false;
+                closeModal('report-modal');
+            }
         }
 
         // --- TOAST UI ---
